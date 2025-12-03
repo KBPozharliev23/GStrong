@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router';
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, FontAwesome } from "@expo/vector-icons"
@@ -7,7 +8,7 @@ import React from 'react'
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
-
+  const router = useRouter();
   return (
     <LinearGradient
       colors={["#16295eff", "#04091aff"]}
@@ -16,9 +17,7 @@ export default function Login() {
       <SafeAreaView style={styles.inner}>
 
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Ionicons name="flash-outline" size={48} color="white" />
-          </View>
+            <Image source={require('../../assets/images/logo.png')} style={styles.logoImage} resizeMode="contain"/>
         </View>
 
         <Text style={styles.title}>Welcome Back</Text>
@@ -79,7 +78,7 @@ export default function Login() {
 
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/signup')}>
             <Text style={styles.signupLink}>Sign up</Text>
           </TouchableOpacity>
         </View>
@@ -100,9 +99,9 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     marginBottom: 24 
   },
-  logo: { 
-    backgroundColor: "#2563EB", 
-    padding: 22, 
+  logoImage: { 
+    width: 100,
+    height: 100,
     borderRadius: 20 
   },
   title: { 

@@ -17,7 +17,14 @@ export default function Login() {
       <SafeAreaView style={styles.inner}>
 
         <View style={styles.logoContainer}>
-            <Image source={require('../../assets/images/logo.png')} style={styles.logoImage} resizeMode="contain"/>
+
+          <View style={styles.logoWrapper}>
+            <Image 
+            source={require('../../assets/images/logo.png')} 
+            style={styles.logoImage} 
+            resizeMode="contain"
+            />
+          </View>
         </View>
 
         <Text style={styles.title}>Welcome Back</Text>
@@ -98,6 +105,13 @@ const styles = StyleSheet.create({
   logoContainer: { 
     alignItems: "center", 
     marginBottom: 24 
+  },
+  logoWrapper: {
+    shadowColor: "#3B82F6",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10
   },
   logoImage: { 
     width: 100,

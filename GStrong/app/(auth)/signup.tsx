@@ -61,6 +61,7 @@ export default function Signup() {
       colors={["#16295eff", "#04091aff"]}
       style={styles.container}
     >
+      
       <SafeAreaView style={styles.inner}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16
+    marginBottom: 14
   },
   backBtn: {
     flexDirection: 'row',

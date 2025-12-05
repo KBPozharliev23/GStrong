@@ -7,9 +7,54 @@ import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
 
 export default function Signup() {
+  const [currentStep, setCurrentStep] = useState(1);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    goal: '',
+    experienceLevel: '',
+    workoutFrequency: '',
+    preferredTime: ''
+  });
+
+  const updateFormData = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const canContinue = () => {
+    if (currentStep === 1) {
+      return formData.fullName && formData.email && formData.password && formData.confirmPassword;
+    }
+    if (currentStep === 2) return formData.goal;
+    if (currentStep === 3) return formData.experienceLevel;
+    if (currentStep === 4) return formData.workoutFrequency && formData.preferredTime;
+    return false;
+  };
+
+  const handleContinue = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      console.log('Signup complete!', formData);
+      router.push('/(tabs)');
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
+    }
+  };
+
+  const progress = (currentStep / 4) * 100;
 
   return (
     <LinearGradient
@@ -17,106 +62,299 @@ export default function Signup() {
       style={styles.container}
     >
       <SafeAreaView style={styles.inner}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+            <Text style={styles.backBtnText}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.stepText}>Step {currentStep} of 4</Text>
+        </View>
+
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${progress}%` }]} />
+        </View>
+
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
 
-          <View style={styles.progressContainer}>
-            <Text style={styles.stepText}>Step 1 of 4</Text>
-            <View style={styles.progressBar}>
-              <View style={styles.progressFill} />
-            </View>
-          </View>
+          {currentStep === 1 && (
+            <>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoWrapper}>
+                  <Image 
+                    source={require('../../assets/images/logo.png')} 
+                    style={styles.logoImage} 
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
 
-          <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <Image 
-                source={require('../../assets/images/logo.png')} 
-                style={styles.logoImage} 
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Let's get you started</Text>
 
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Let's get you started</Text>
+              <Text style={styles.label}>Full Name</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="person-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="John Doe"
+                  placeholderTextColor="#6B7280"
+                  value={formData.fullName}
+                  onChangeText={(text) => updateFormData('fullName', text)}
+                />
+              </View>
 
-          <Text style={styles.label}>Full Name</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="John Doe"
-              placeholderTextColor="#6B7280"
-            />
-          </View>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="you@example.com"
+                  placeholderTextColor="#6B7280"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={formData.email}
+                  onChangeText={(text) => updateFormData('email', text)}
+                />
+              </View>
 
-          <Text style={styles.label}>Email Address</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="you@example.com"
-              placeholderTextColor="#6B7280"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#6B7280"
+                  secureTextEntry={!passwordVisible}
+                  value={formData.password}
+                  onChangeText={(text) => updateFormData('password', text)}
+                />
+                <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+                  <Ionicons
+                    name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+                    size={22}
+                    color="#9CA3AF"
+                  />
+                </TouchableOpacity>
+              </View>
 
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#6B7280"
-              secureTextEntry={!passwordVisible}
-            />
-            <TouchableOpacity
-              onPress={() => setPasswordVisible(!passwordVisible)}
-            >
-              <Ionicons
-                name={passwordVisible ? "eye-off-outline" : "eye-outline"}
-                size={22}
-                color="#9CA3AF"
-              />
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.label}>Confirm Password</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#6B7280"
+                  secureTextEntry={!confirmPasswordVisible}
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => updateFormData('confirmPassword', text)}
+                />
+                <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
+                  <Ionicons
+                    name={confirmPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                    size={22}
+                    color="#9CA3AF"
+                  />
+                </TouchableOpacity>
+              </View>
 
-          <Text style={styles.label}>Confirm Password</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={22} color="#9CA3AF" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#6B7280"
-              secureTextEntry={!confirmPasswordVisible}
-            />
-            <TouchableOpacity
-              onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
-            >
-              <Ionicons
-                name={confirmPasswordVisible ? "eye-off-outline" : "eye-outline"}
-                size={22}
-                color="#9CA3AF"
-              />
-            </TouchableOpacity>
-          </View>
+              <View style={styles.signinContainer}>
+                <Text style={styles.signinText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/(auth)')}>
+                  <Text style={styles.signinLink}>Sign in</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
-          <TouchableOpacity style={styles.continueButton}>
-            <Text style={styles.continueText}>Continue</Text>
-            <Ionicons name="arrow-forward-outline" size={22} color="white" />
-          </TouchableOpacity>
+          {currentStep === 2 && (
+            <>
+              <Text style={styles.title}>Your Goal</Text>
+              <Text style={styles.subtitle}>What do you want to achieve?</Text>
 
-          <View style={styles.signinContainer}>
-            <Text style={styles.signinText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)')}>
-              <Text style={styles.signinLink}>Sign in</Text>
-            </TouchableOpacity>
-          </View>
+              <View style={styles.goalsGrid}>
+                <TouchableOpacity 
+                  style={[styles.goalCard, formData.goal === 'lose' && styles.goalCardActive]}
+                  onPress={() => updateFormData('goal', 'lose')}
+                >
+                  <Ionicons name="trending-down" size={40} color="#3B82F6" />
+                  <Text style={styles.goalText}>Lose Weight</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.goalCard, formData.goal === 'build' && styles.goalCardActive]}
+                  onPress={() => updateFormData('goal', 'build')}
+                >
+                  <Ionicons name="flame" size={40} color="#F59E0B" />
+                  <Text style={styles.goalText}>Build Muscle</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.goalCard, formData.goal === 'stay' && styles.goalCardActive]}
+                  onPress={() => updateFormData('goal', 'stay')}
+                >
+                  <Ionicons name="radio-button-on" size={40} color="#10B981" />
+                  <Text style={styles.goalText}>Stay Fit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.goalCard, formData.goal === 'improve' && styles.goalCardActive]}
+                  onPress={() => updateFormData('goal', 'improve')}
+                >
+                  <Ionicons name="flash" size={40} color="#FBBF24" />
+                  <Text style={styles.goalText}>Improve Endurance</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {currentStep === 3 && (
+            <>
+              <Text style={styles.title}>Experience Level</Text>
+              <Text style={styles.subtitle}>How would you describe yourself?</Text>
+
+              <TouchableOpacity 
+                style={[styles.levelCard, formData.experienceLevel === 'beginner' && styles.levelCardActive]}
+                onPress={() => updateFormData('experienceLevel', 'beginner')}
+              >
+                <Text style={styles.levelIcon}>🌱</Text>
+                <View style={styles.levelInfo}>
+                  <Text style={styles.levelTitle}>Beginner</Text>
+                  <Text style={styles.levelDesc}>Just starting out</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.levelCard, formData.experienceLevel === 'intermediate' && styles.levelCardActive]}
+                onPress={() => updateFormData('experienceLevel', 'intermediate')}
+              >
+                <Text style={styles.levelIcon}>💪</Text>
+                <View style={styles.levelInfo}>
+                  <Text style={styles.levelTitle}>Intermediate</Text>
+                  <Text style={styles.levelDesc}>Some experience</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.levelCard, formData.experienceLevel === 'advanced' && styles.levelCardActive]}
+                onPress={() => updateFormData('experienceLevel', 'advanced')}
+              >
+                <Text style={styles.levelIcon}>🔥</Text>
+                <View style={styles.levelInfo}>
+                  <Text style={styles.levelTitle}>Advanced</Text>
+                  <Text style={styles.levelDesc}>Regular training</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.levelCard, formData.experienceLevel === 'expert' && styles.levelCardActive]}
+                onPress={() => updateFormData('experienceLevel', 'expert')}
+              >
+                <Text style={styles.levelIcon}>⚡</Text>
+                <View style={styles.levelInfo}>
+                  <Text style={styles.levelTitle}>Expert</Text>
+                  <Text style={styles.levelDesc}>Years of experience</Text>
+                </View>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {currentStep === 4 && (
+            <>
+              <Text style={styles.title}>Almost There!</Text>
+              <Text style={styles.subtitle}>Tell us about your routine</Text>
+
+              <Text style={styles.sectionTitle}>How often do you want to workout?</Text>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, formData.workoutFrequency === '1-2' && styles.optionCardActive]}
+                onPress={() => updateFormData('workoutFrequency', '1-2')}
+              >
+                <Text style={styles.optionTitle}>1-2 days/week</Text>
+                <Text style={styles.optionDesc}>Light activity</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, formData.workoutFrequency === '3-4' && styles.optionCardActive]}
+                onPress={() => updateFormData('workoutFrequency', '3-4')}
+              >
+                <Text style={styles.optionTitle}>3-4 days/week</Text>
+                <Text style={styles.optionDesc}>Moderate activity</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, formData.workoutFrequency === '5-6' && styles.optionCardActive]}
+                onPress={() => updateFormData('workoutFrequency', '5-6')}
+              >
+                <Text style={styles.optionTitle}>5-6 days/week</Text>
+                <Text style={styles.optionDesc}>High activity</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, formData.workoutFrequency === 'daily' && styles.optionCardActive]}
+                onPress={() => updateFormData('workoutFrequency', 'daily')}
+              >
+                <Text style={styles.optionTitle}>Daily</Text>
+                <Text style={styles.optionDesc}>Maximum commitment</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.sectionTitle}>Preferred workout time?</Text>
+
+              <View style={styles.timeGrid}>
+                <TouchableOpacity 
+                  style={[styles.timeCard, formData.preferredTime === 'morning' && styles.timeCardActive]}
+                  onPress={() => updateFormData('preferredTime', 'morning')}
+                >
+                  <Text style={styles.timeIcon}>🌅</Text>
+                  <Text style={styles.timeTitle}>Morning</Text>
+                  <Text style={styles.timeDesc}>6AM - 10AM</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.timeCard, formData.preferredTime === 'afternoon' && styles.timeCardActive]}
+                  onPress={() => updateFormData('preferredTime', 'afternoon')}
+                >
+                  <Text style={styles.timeIcon}>☀️</Text>
+                  <Text style={styles.timeTitle}>Afternoon</Text>
+                  <Text style={styles.timeDesc}>12PM - 4PM</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.timeCard, formData.preferredTime === 'evening' && styles.timeCardActive]}
+                  onPress={() => updateFormData('preferredTime', 'evening')}
+                >
+                  <Text style={styles.timeIcon}>🌆</Text>
+                  <Text style={styles.timeTitle}>Evening</Text>
+                  <Text style={styles.timeDesc}>5PM - 9PM</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.timeCard, formData.preferredTime === 'night' && styles.timeCardActive]}
+                  onPress={() => updateFormData('preferredTime', 'night')}
+                >
+                  <Text style={styles.timeIcon}>🌙</Text>
+                  <Text style={styles.timeTitle}>Night</Text>
+                  <Text style={styles.timeDesc}>9PM+</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
         </ScrollView>
+
+        <TouchableOpacity 
+          style={[styles.continueButton, !canContinue() && styles.continueButtonDisabled]}
+          onPress={handleContinue}
+          disabled={!canContinue()}
+        >
+          <Text style={styles.continueText}>
+            {currentStep === 4 ? 'Complete Setup' : 'Continue'}
+          </Text>
+          <Ionicons name="arrow-forward-outline" size={22} color="white" />
+        </TouchableOpacity>
+
       </SafeAreaView>
     </LinearGradient>
   );
@@ -126,32 +364,44 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   inner: { 
     flex: 1, 
-    paddingHorizontal: 24
+    paddingHorizontal: 24,
+    paddingTop: 20
   },
-  scrollContent: {
-    paddingBottom: 40
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
   },
-  progressContainer: {
-    marginBottom: 32
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  backBtnText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500'
   },
   stepText: {
     color: "white",
     fontSize: 14,
-    textAlign: "right",
-    marginBottom: 12,
     fontWeight: "500"
   },
   progressBar: {
     height: 6,
     backgroundColor: "#1E293B",
     borderRadius: 10,
-    overflow: "hidden"
+    overflow: "hidden",
+    marginBottom: 32
   },
   progressFill: {
     height: "100%",
-    width: "25%",
     backgroundColor: "#3B82F6",
     borderRadius: 10
+  },
+  scrollContent: {
+    paddingBottom: 20
   },
   logoContainer: { 
     alignItems: "center", 
@@ -206,22 +456,6 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
   inputIcon: { marginRight: 4 },
-  continueButton: {
-    backgroundColor: "#3B82F6",
-    paddingVertical: 18,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 12,
-    marginBottom: 24
-  },
-  continueText: { 
-    color: "white", 
-    fontSize: 17, 
-    fontWeight: "600"
-  },
   signinContainer: { 
     flexDirection: "row", 
     justifyContent: "center",
@@ -234,6 +468,148 @@ const styles = StyleSheet.create({
   signinLink: { 
     color: "#3B82F6", 
     fontSize: 15,
+    fontWeight: "600"
+  },
+  goalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    justifyContent: 'space-between'
+  },
+  goalCard: {
+    width: '47%',
+    aspectRatio: 1,
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1E293B',
+    padding: 20
+  },
+  goalCardActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#1E293B'
+  },
+  goalText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center'
+  },
+  levelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#1E293B'
+  },
+  levelCardActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#1E293B'
+  },
+  levelIcon: {
+    fontSize: 36,
+    marginRight: 16
+  },
+  levelInfo: {
+    flex: 1
+  },
+  levelTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  levelDesc: {
+    color: '#9CA3AF',
+    fontSize: 14
+  },
+  sectionTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+    marginTop: 8
+  },
+  optionCard: {
+    backgroundColor: '#0F172A',
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#1E293B'
+  },
+  optionCardActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#1E293B'
+  },
+  optionTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  optionDesc: {
+    color: '#9CA3AF',
+    fontSize: 14
+  },
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
+    marginBottom: 20
+  },
+  timeCard: {
+    width: '47%',
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1E293B'
+  },
+  timeCardActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#1E293B'
+  },
+  timeIcon: {
+    fontSize: 32,
+    marginBottom: 8
+  },
+  timeTitle: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  timeDesc: {
+    color: '#9CA3AF',
+    fontSize: 12
+  },
+  continueButton: {
+    backgroundColor: "#3B82F6",
+    paddingVertical: 18,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 20
+  },
+  continueButtonDisabled: {
+    backgroundColor: "#1E3A5F",
+    opacity: 0.6
+  },
+  continueText: { 
+    color: "white", 
+    fontSize: 17, 
     fontWeight: "600"
   }
 });

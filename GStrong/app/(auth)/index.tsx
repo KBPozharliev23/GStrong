@@ -62,7 +62,7 @@ export default function Login() {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signInButton}>
+        <TouchableOpacity style={styles.signInButton} onPress={() => router.push('/(tabs)')}>
           <Text style={styles.signInText}>Sign In</Text>
           <Ionicons name="arrow-forward-outline" size={24} color="white" />
         </TouchableOpacity>

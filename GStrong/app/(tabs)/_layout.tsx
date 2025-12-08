@@ -1,5 +1,5 @@
-import { Text, View, Animated, StyleSheet } from 'react-native'
-import { Tabs } from 'expo-router'
+import { Text, View, Animated, StyleSheet, TouchableOpacity } from 'react-native'
+import { Tabs, useRouter } from 'expo-router'
 import { Ionicons } from "@expo/vector-icons"
 import React, { useEffect, useRef } from 'react'
 
@@ -9,7 +9,6 @@ const AnimatedTabIcon = ({ name, color, focused }: { name: any, color: string, f
 
     useEffect(() => {
         if (focused) {
-            // Breathing animation
             Animated.loop(
                 Animated.sequence([
                     Animated.timing(scaleAnim, {
@@ -25,7 +24,6 @@ const AnimatedTabIcon = ({ name, color, focused }: { name: any, color: string, f
                 ])
             ).start()
 
-            // Glow animation
             Animated.loop(
                 Animated.sequence([
                     Animated.timing(glowAnim, {
@@ -64,9 +62,27 @@ const AnimatedTabIcon = ({ name, color, focused }: { name: any, color: string, f
                     shadowRadius: 8,
                 }}
             >
-                <Ionicons name={name} size={24} color={color} />
+                <Ionicons name={name} size={26} color={color} />
             </Animated.View>
         </Animated.View>
+    )
+}
+
+const CenterCreateButton = () => {
+    const router = useRouter()
+    
+    return (
+        <View style={styles.centerButtonContainer}>
+            <TouchableOpacity 
+                style={styles.createButton}
+                onPress={() => {
+                    console.log('Create button pressed')
+                }}
+            >
+                <Ionicons name="add" size={28} color="white" />
+                <Text style={styles.createText}>Create</Text>
+            </TouchableOpacity>
+        </View>
     )
 }
 
@@ -76,25 +92,31 @@ const TabsLayout = () => {
         tabBarActiveTintColor: '#60A5FA',
         tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
-            backgroundColor: "#0A0E1A",
-            borderTopWidth: 0,
-            height: 110,
+            backgroundColor: "#0F172A",
+            borderTopWidth: 1,
+            height: 90,
             paddingBottom: 25,
-            paddingTop: 8,
+            paddingTop: 5,
             elevation: 0,
             shadowColor: '#60A5FA',
             shadowOffset: { width: 0, height: -2 },
             shadowOpacity: 0.3,
             shadowRadius: 10,
             borderTopColor: 'rgba(96, 165, 250, 0.2)',
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            position: 'relative',
+            paddingHorizontal: 10,
+            justifyContent: 'center',
         },
         tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: "500",
-            marginTop: 4,
+            fontWeight: "600",
+            marginTop: 3,
         },
         tabBarItemStyle: {
             paddingVertical: 5,
+            marginTop: -10,
         },
         headerShown: false,
       }}>
@@ -128,26 +150,21 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen 
+        name="create"
+        options={{
+            title:"",
+            tabBarIcon: () => <CenterCreateButton />,
+            tabBarLabel: () => null,
+        }}
+        />
+
+        <Tabs.Screen 
         name="exercises"
         options={{
             title:"Exercises",
             tabBarIcon: ({color, focused}) => (
                 <AnimatedTabIcon 
                     name='barbell' 
-                    color={color}
-                    focused={focused}
-                />
-            )
-        }}
-        />
-
-        <Tabs.Screen 
-        name="progress"
-        options={{
-            title:"Progress",
-            tabBarIcon: ({color, focused}) => (
-                <AnimatedTabIcon 
-                    name='trending-up' 
                     color={color}
                     focused={focused}
                 />
@@ -172,5 +189,34 @@ const TabsLayout = () => {
       </Tabs>
     )
 }
+
+const styles = StyleSheet.create({
+    centerButtonContainer: {
+        top: -15,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    createButton: {
+        width: 90,
+        height: 90,
+        borderRadius: 35,
+        backgroundColor: '#3B82F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.6,
+        shadowRadius: 10,
+        elevation: 10,
+        borderWidth: 4,
+        borderColor: '#0F172A',
+    },
+    createText: {
+        color: 'white',
+        fontSize: 9,
+        fontWeight: '700',
+        marginTop: 1,
+    }
+})
 
 export default TabsLayout

@@ -97,7 +97,7 @@ export default function Profile() {
 
   const handleMenuPress = (label: string) => {
     if (label === 'Settings') {
-      router.push('/settings');
+      router.replace('/settings');
     }
   };
 

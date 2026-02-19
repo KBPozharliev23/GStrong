@@ -62,7 +62,7 @@ export default function Login() {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signInButton} onPress={() => router.push('/(tabs)')}>
+        <TouchableOpacity style={styles.signInButton} onPress={() => router.replace('/(tabs)')}>
           <Text style={styles.signInText}>Sign In</Text>
           <Ionicons name="arrow-forward-outline" size={24} color="white" />
         </TouchableOpacity>
@@ -85,7 +85,7 @@ export default function Login() {
 
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/signup')}>
+          <TouchableOpacity onPress={() => router.replace('/signup')}>
             <Text style={styles.signupLink}>Sign up</Text>
           </TouchableOpacity>
         </View>

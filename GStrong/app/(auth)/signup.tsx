@@ -42,7 +42,7 @@ export default function Signup() {
       setCurrentStep(currentStep + 1);
     } else {
       console.log('Signup complete!', formData);
-      router.push('/(tabs)');
+      router.replace('/(tabs)');
     }
   };
 
@@ -163,7 +163,7 @@ export default function Signup() {
 
               <View style={styles.signinContainer}>
                 <Text style={styles.signinText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/(auth)')}>
+                <TouchableOpacity onPress={() => router.replace('/(auth)')}>
                   <Text style={styles.signinLink}>Sign in</Text>
                 </TouchableOpacity>
               </View>

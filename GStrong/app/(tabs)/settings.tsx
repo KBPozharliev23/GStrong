@@ -17,7 +17,7 @@ export default function Settings() {
   const [soundEffects, setSoundEffects] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const router = useRouter();
-  
+
   const renderSectionHeader = (title: string) => (
     <Text style={styles.sectionHeader}>{title}</Text>
   );
@@ -62,7 +62,7 @@ export default function Settings() {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/profile')}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/profile')}>
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>

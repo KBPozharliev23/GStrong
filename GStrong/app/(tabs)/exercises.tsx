@@ -18,14 +18,6 @@ interface MuscleGroup {
   name: string;
   count: number;
   tags: string[];
-  /**
-   * Set `image` to a local require() or remote URI to show a photo.
-   * Examples:
-   *   image: require('./assets/chest.jpg')
-   *   image: { uri: 'https://example.com/chest.jpg' }
-   *
-   * Leave as `null` to show the fallbackEmoji placeholder instead.
-   */
   image: ImageSourcePropType | null;
   fallbackColor: string;
   fallbackEmoji: string;
@@ -249,7 +241,7 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 12,
-    overflow: 'hidden',   // clips image to rounded corners
+    overflow: 'hidden',
     marginRight: 14,
     flexShrink: 0,
   },

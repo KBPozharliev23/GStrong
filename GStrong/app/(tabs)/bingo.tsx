@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Animated,
   Modal,
   Dimensions,
+  Share,
+  Alert,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -59,21 +61,9 @@ const bingoGrid: Task[][] = [
 ];
 
 const LINES = [
-  // Rows
-  [0,1,2,3,4],
-  [5,6,7,8,9],
-  [10,11,12,13,14],
-  [15,16,17,18,19],
-  [20,21,22,23,24],
-  // Cols
-  [0,5,10,15,20],
-  [1,6,11,16,21],
-  [2,7,12,17,22],
-  [3,8,13,18,23],
-  [4,9,14,19,24],
-  // Diagonals
-  [0,6,12,18,24],
-  [4,8,12,16,20],
+  [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+  [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+  [0,6,12,18,24], [4,8,12,16,20],
 ];
 
 const CATEGORIES: Category[] = ['All', 'Cardio', 'Strength', 'Flexibility', 'Endurance'];
@@ -86,79 +76,137 @@ const CATEGORY_COLORS: Record<string, string> = {
   FREE: '#22c55e',
 };
 
+const CELL_SIZE = (width - 28 - 16) / 5;
+
 export default function WeeklyBingo() {
   const flatTasks = bingoGrid.flat();
 
-  const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set([12])); // FREE center
+  const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set([10])); // FREE is index 10
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [completedLines, setCompletedLines] = useState<Set<number>>(new Set());
   const [totalPoints, setTotalPoints] = useState(0);
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupLine, setPopupLine] = useState<number[]>([]);
-  const popupScale = useRef(new Animated.Value(0)).current;
-  const popupOpacity = useRef(new Animated.Value(0)).current;
 
-  const checkLines = (completed: Set<number>) => {
-    let newLineFound = false;
-    let newLineIndices: number[] = [];
-    const newCompletedLines = new Set(completedLines);
+  // Line complete popup
+  const [showLinePopup, setShowLinePopup] = useState(false);
+  const linePopupScale = useRef(new Animated.Value(0)).current;
+  const linePopupOpacity = useRef(new Animated.Value(0)).current;
 
-    LINES.forEach((line, lineIdx) => {
-      if (!completedLines.has(lineIdx) && line.every(i => completed.has(i))) {
-        newCompletedLines.add(lineIdx);
-        newLineFound = true;
-        newLineIndices = line;
+  // Share progress modal
+  const [showShareModal, setShowShareModal] = useState(false);
+  const shareModalY = useRef(new Animated.Value(300)).current;
+  const shareModalOpacity = useRef(new Animated.Value(0)).current;
+
+  // ── Line check ──────────────────────────────────────────────
+  const checkLines = (completed: Set<number>, currentLines: Set<number>) => {
+    const newCompletedLines = new Set(currentLines);
+    let found = false;
+
+    LINES.forEach((line, idx) => {
+      if (!currentLines.has(idx) && line.every(i => completed.has(i))) {
+        newCompletedLines.add(idx);
+        found = true;
       }
     });
 
-    if (newLineFound) {
+    if (found) {
       setCompletedLines(newCompletedLines);
-      setPopupLine(newLineIndices);
-      setShowPopup(true);
-      popupScale.setValue(0);
-      popupOpacity.setValue(0);
-      Animated.parallel([
-        Animated.spring(popupScale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
-        Animated.timing(popupOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
-      ]).start();
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(popupScale, { toValue: 0.85, duration: 120, useNativeDriver: true }),
-          Animated.timing(popupOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
-        ]).start(() => setShowPopup(false));
-      }, 1500);
+      triggerLinePopup();
     }
 
     return newCompletedLines;
   };
 
+  const triggerLinePopup = () => {
+    setShowLinePopup(true);
+    linePopupScale.setValue(0);
+    linePopupOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(linePopupScale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
+      Animated.timing(linePopupOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(linePopupScale, { toValue: 0.85, duration: 120, useNativeDriver: true }),
+        Animated.timing(linePopupOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
+      ]).start(() => setShowLinePopup(false));
+    }, 1500);
+  };
+
+  // ── Toggle task ──────────────────────────────────────────────
   const toggleTask = (index: number) => {
     const task = flatTasks[index];
     if (task.label === 'FREE') return;
 
     const newCompleted = new Set(completedTasks);
-    let pointsDelta = 0;
+    let delta = 0;
 
     if (newCompleted.has(index)) {
       newCompleted.delete(index);
-      pointsDelta = -task.points;
+      delta = -task.points;
     } else {
       newCompleted.add(index);
-      pointsDelta = task.points;
+      delta = task.points;
     }
 
     setCompletedTasks(newCompleted);
-    setTotalPoints(p => p + pointsDelta);
-    checkLines(newCompleted);
+    setTotalPoints(p => p + delta);
+    checkLines(newCompleted, completedLines);
   };
 
+  // ── Reset ────────────────────────────────────────────────────
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Board',
+      'Are you sure you want to reset your progress?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            setCompletedTasks(new Set([10]));
+            setCompletedLines(new Set());
+            setTotalPoints(0);
+          },
+        },
+      ]
+    );
+  };
+
+  // ── Share modal ──────────────────────────────────────────────
+  const openShareModal = () => {
+    setShowShareModal(true);
+    shareModalY.setValue(400);
+    shareModalOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(shareModalY, { toValue: 0, useNativeDriver: true, tension: 120, friction: 14 }),
+      Animated.timing(shareModalOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const closeShareModal = () => {
+    Animated.parallel([
+      Animated.timing(shareModalY, { toValue: 400, duration: 200, useNativeDriver: true }),
+      Animated.timing(shareModalOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+    ]).start(() => setShowShareModal(false));
+  };
+
+  const handleShare = async () => {
+    const completedCount = completedTasks.size;
+    try {
+      await Share.share({
+        message: `💪 Weekly Bingo Progress\n\n✅ ${completedCount}/25 Tasks Completed\n🏆 ${completedLines.size} Lines\n⭐ ${totalPoints} Total Points\n\nComplete 5 in a row to win!`,
+      });
+    } catch (e) {}
+    closeShareModal();
+  };
+
+  // ── Derived state ────────────────────────────────────────────
   const completedCount = completedTasks.size;
   const progressPercentage = Math.round((completedCount / 25) * 100);
 
-  const isTaskVisible = (task: Task) => {
-    if (selectedCategory === 'All') return true;
-    return task.category === selectedCategory;
-  };
+  const isTaskVisible = (task: Task) =>
+    selectedCategory === 'All' || task.category === selectedCategory;
 
   const achievements = [
     { id: 'first_line', icon: '🥇', title: 'First Line', desc: 'Complete 1 line', unlocked: completedLines.size >= 1 },
@@ -167,23 +215,24 @@ export default function WeeklyBingo() {
     { id: 'point_master', icon: '⚡', title: 'Point Master', desc: 'Earn 300+ points', unlocked: totalPoints >= 300 },
   ];
 
-  const getCategoryDot = (task: Task) => {
-    if (task.category === 'FREE') return '#22c55e';
-    return CATEGORY_COLORS[task.category] || '#9ca3af';
-  };
+  const getCategoryDot = (task: Task) =>
+    task.category === 'FREE' ? '#22c55e' : CATEGORY_COLORS[task.category] || '#9ca3af';
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Weekly Bingo</Text>
             <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.iconBtn}>
+              {/* Share button */}
+              <TouchableOpacity style={styles.iconBtn} onPress={openShareModal}>
                 <Text style={styles.iconBtnText}>⬆</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.iconBtn}>
+              {/* Reset button */}
+              <TouchableOpacity style={styles.iconBtn} onPress={handleReset}>
                 <Text style={styles.iconBtnText}>↺</Text>
               </TouchableOpacity>
             </View>
@@ -274,9 +323,7 @@ export default function WeeklyBingo() {
                     isLineCell && styles.gridItemLine,
                   ]}
                 >
-                  {/* Category dot */}
                   <View style={[styles.categoryDot, { backgroundColor: getCategoryDot(task) }]} />
-
                   {isCompleted && !isFree && (
                     <Text style={styles.checkmark}>✓</Text>
                   )}
@@ -302,33 +349,87 @@ export default function WeeklyBingo() {
         </View>
       </ScrollView>
 
-      {/* Line Complete Popup */}
-      {showPopup && (
+      {/* ── Line Complete Popup ── */}
+      {showLinePopup && (
         <Modal transparent animationType="none">
-          <View style={styles.popupOverlay}>
-            <Animated.View style={[styles.popupCard, { transform: [{ scale: popupScale }], opacity: popupOpacity }]}>
-              <Text style={styles.popupIcon}>🏆</Text>
-              <Text style={styles.popupTitle}>Line Complete!</Text>
-              <Text style={styles.popupSubtitle}>+100 Bonus Points</Text>
+          <View style={styles.linePopupOverlay}>
+            <Animated.View style={[styles.linePopupCard, { transform: [{ scale: linePopupScale }], opacity: linePopupOpacity }]}>
+              <Text style={styles.linePopupIcon}>🏆</Text>
+              <Text style={styles.linePopupTitle}>Line Complete!</Text>
+              <Text style={styles.linePopupSubtitle}>+100 Bonus Points</Text>
             </Animated.View>
           </View>
+        </Modal>
+      )}
+
+      {/* ── Share Progress Modal ── */}
+      {showShareModal && (
+        <Modal transparent animationType="none" onRequestClose={closeShareModal}>
+          {/* Backdrop */}
+          <TouchableOpacity style={styles.shareBackdrop} activeOpacity={1} onPress={closeShareModal}>
+            <Animated.View style={{ flex: 1, opacity: shareModalOpacity, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          </TouchableOpacity>
+
+          {/* Sheet */}
+          <Animated.View style={[styles.shareSheet, { transform: [{ translateY: shareModalY }] }]}>
+            {/* Header */}
+            <View style={styles.shareHeader}>
+              <Text style={styles.shareTitle}>Share Progress</Text>
+              <TouchableOpacity onPress={closeShareModal} style={styles.shareCloseBtn}>
+                <Text style={styles.shareCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Stats card */}
+            <View style={styles.shareStatsCard}>
+              <Text style={styles.shareStatsMain}>{completedCount}/25</Text>
+              <Text style={styles.shareStatsLabel}>Tasks Completed</Text>
+              <Text style={styles.shareStatsLines}>{completedLines.size} Lines</Text>
+              <Text style={styles.shareStatsPoints}>{totalPoints} Total Points</Text>
+            </View>
+
+            {/* Action buttons */}
+            <View style={styles.shareActions}>
+              <TouchableOpacity style={styles.shareActionBtn} onPress={handleShare}>
+                <Text style={styles.shareActionIcon}>⬆</Text>
+                <Text style={styles.shareActionLabel}>Share</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareActionBtn}>
+                <Text style={styles.shareActionIcon}>📋</Text>
+                <Text style={styles.shareActionLabel}>History</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareActionBtn}>
+                <Text style={styles.shareActionIcon}>🏆</Text>
+                <Text style={styles.shareActionLabel}>Leaderboard</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
         </Modal>
       )}
     </View>
   );
 }
 
-const CELL_SIZE = (width - 28 - 16) / 5; // slightly larger cells
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#060a14'},
+  container: { flex: 1, backgroundColor: '#060a14' },
 
-  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10,  marginTop:10},
+  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white' },
   subtitle: { color: '#6b7280', marginTop: 4, fontSize: 13 },
   headerActions: { flexDirection: 'row', gap: 8 },
-  iconBtn: { backgroundColor: '#111827', borderRadius: 20, width: 36, height: 36, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#1f2a3c' },
+  iconBtn: {
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1f2a3c',
+  },
   iconBtnText: { color: '#9ca3af', fontSize: 16 },
 
   section: { paddingHorizontal: 14, marginBottom: 14 },
@@ -418,8 +519,9 @@ const styles = StyleSheet.create({
   achievementTitle: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   achievementDesc: { color: '#6b7280', fontSize: 11, marginTop: 2 },
 
-  popupOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
-  popupCard: {
+  // ── Line complete popup ──
+  linePopupOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
+  linePopupCard: {
     backgroundColor: '#130e02',
     borderColor: '#d97706',
     borderWidth: 1.5,
@@ -432,7 +534,70 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     shadowOffset: { width: 0, height: 0 },
   },
-  popupIcon: { fontSize: 48, marginBottom: 10 },
-  popupTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-  popupSubtitle: { color: '#fbbf24', fontSize: 15, marginTop: 5, fontWeight: '600' },
+  linePopupIcon: { fontSize: 48, marginBottom: 10 },
+  linePopupTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
+  linePopupSubtitle: { color: '#fbbf24', fontSize: 15, marginTop: 5, fontWeight: '600' },
+
+  // ── Share modal ──
+  shareBackdrop: { ...StyleSheet.absoluteFillObject },
+  shareSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0e1729',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 48,
+    borderTopWidth: 1,
+    borderColor: '#1a2540',
+  },
+  shareHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  shareTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  shareCloseBtn: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareCloseText: { color: '#6b7280', fontSize: 16 },
+
+  shareStatsCard: {
+    backgroundColor: '#1a2a4a',
+    borderRadius: 18,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#1f3a6a',
+  },
+  shareStatsMain: { color: 'white', fontSize: 40, fontWeight: 'bold', lineHeight: 46 },
+  shareStatsLabel: { color: '#94a3b8', fontSize: 13, marginBottom: 10 },
+  shareStatsLines: { color: '#facc15', fontSize: 22, fontWeight: 'bold' },
+  shareStatsPoints: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
+
+  shareActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  shareActionBtn: {
+    flex: 1,
+    backgroundColor: '#1a2a4a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1f3a6a',
+    paddingVertical: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  shareActionIcon: { fontSize: 24 },
+  shareActionLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
 });

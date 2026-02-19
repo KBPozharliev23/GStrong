@@ -10,6 +10,7 @@ import {
   ImageSourcePropType,
   Dimensions,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -95,7 +96,18 @@ const POPULAR: PopularExercise[] = [
   { name: 'Pull-ups', group: 'Back', sets: '3x8', tagColor: '#065f46', lightColor: '#4ade80' },
 ];
 
+// Map of group id -> route path
+const GROUP_ROUTES: Record<string, string> = {
+  chest: '/chest',
+  back: '/back',
+  legs: '/legs',
+  shoulders: '/shoulders',
+  arms: '/arms',
+  core: '/core',
+};
+
 export default function ExercisesPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -103,6 +115,15 @@ export default function ExercisesPage() {
     g.name.toLowerCase().includes(search.toLowerCase()) ||
     g.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const handleGroupPress = (group: MuscleGroup) => {
+    const route = GROUP_ROUTES[group.id];
+    if (route) {
+      router.replace(route as any);
+    } else {
+      setSelected(selected === group.id ? null : group.id);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -134,7 +155,7 @@ export default function ExercisesPage() {
             <TouchableOpacity
               key={group.id}
               activeOpacity={0.75}
-              onPress={() => setSelected(selected === group.id ? null : group.id)}
+              onPress={() => handleGroupPress(group)}
               style={[
                 styles.groupCard,
                 selected === group.id && styles.groupCardSelected,
@@ -202,7 +223,7 @@ const CARD_W = (width - 28 - 10) / 2;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
 
-  header: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12 },
+  header: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12, marginTop:10 },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white' },
   subtitle: { color: '#6b7280', fontSize: 13, marginTop: 4 },
 

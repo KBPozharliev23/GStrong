@@ -80,7 +80,7 @@ export default function FitnessDashboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
-  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20,   marginTop:10 },
+  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20, marginTop:10 },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white', marginBottom: 6 },
   subtitle: { color: '#9ca3af' },
 

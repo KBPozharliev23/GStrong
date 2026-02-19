@@ -194,8 +194,16 @@ const TabsLayout = () => {
             headerShown: false,
         }}
         />
+        <Tabs.Screen
+        name="chest"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
 
       </Tabs>
+      
     )
 }
 

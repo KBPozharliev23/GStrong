@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -89,9 +90,16 @@ const menuItems = [
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState<'profile' | 'progress'>('profile');
+  const router = useRouter();
 
   const streakDays = 12;
   const totalDays = 7;
+
+  const handleMenuPress = (label: string) => {
+    if (label === 'Settings') {
+      router.push('/settings');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -135,7 +143,7 @@ export default function Profile() {
                     />
                   </View>
                   <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>George Strong</Text>
+                    <Text style={styles.profileName}>Alex Johnson</Text>
                   </View>
                   <TouchableOpacity>
                     <Text style={styles.editText}>Edit</Text>
@@ -184,7 +192,7 @@ export default function Profile() {
             <View style={styles.section}>
               <View style={styles.menuList}>
                 {menuItems.map((item, index) => (
-                  <TouchableOpacity key={index} style={styles.menuItem} activeOpacity={0.7}>
+                  <TouchableOpacity key={index} style={styles.menuItem} activeOpacity={0.7} onPress={() => handleMenuPress(item.label)}>
                     <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
                       <Text style={{ fontSize: 16 }}>{item.icon}</Text>
                     </View>
@@ -202,7 +210,7 @@ export default function Profile() {
               </View>
             </View>
 
-            <Text style={styles.versionText}>GStrong Fitness v1.0</Text>
+            <Text style={styles.versionText}>Liftoff Fitness v1.2.0</Text>
           </>
         ) : (
           <>
@@ -369,9 +377,9 @@ const styles = StyleSheet.create({
   },
   avatarImage: {
     width: 130,
-    height: 160,
-    top: -5,
-    left: -35,
+    height: 130,
+    top: -8,
+    left: -33,
   },
   avatarPlaceholder: {
     width: 64,

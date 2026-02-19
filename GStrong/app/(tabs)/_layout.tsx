@@ -186,6 +186,15 @@ const TabsLayout = () => {
         }}
         />
 
+        {/* Hidden screen - not shown in tab bar */}
+        <Tabs.Screen
+        name="settings"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+
       </Tabs>
     )
 }

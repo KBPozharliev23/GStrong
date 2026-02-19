@@ -178,14 +178,11 @@ function ExerciseModal({
 
   return (
     <Modal transparent animationType="none" onRequestClose={handleClose}>
-      {/* Backdrop */}
       <Animated.View style={[styles.modalBackdrop, { opacity: backdropOpacity }]}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
       </Animated.View>
 
-      {/* Sheet */}
       <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideY }] }]}>
-        {/* Hero image behind the sheet */}
         <View style={styles.modalHero}>
           <View style={[styles.modalHeroPlaceholder, { backgroundColor: '#0c1120' }]} />
           <Animated.Image
@@ -197,11 +194,9 @@ function ExerciseModal({
           <View style={styles.modalHeroGradient} />
         </View>
 
-        {/* Pull indicator */}
         <View style={styles.pullIndicator} />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
-          {/* Title row */}
           <View style={styles.modalTitleRow}>
             <Text style={styles.modalTitle}>{exercise.name}</Text>
             <View style={[styles.diffBadge, { backgroundColor: diff.bg, borderColor: diff.border }]}>
@@ -209,13 +204,11 @@ function ExerciseModal({
             </View>
           </View>
 
-          {/* Sets × Reps */}
           <View style={styles.modalMeta}>
             <Text style={styles.modalMetaIcon}>⊙</Text>
             <Text style={styles.modalMetaText}>{exercise.sets} × {exercise.reps}</Text>
           </View>
 
-          {/* Target Muscles */}
           <Text style={styles.modalSectionLabel}>Target Muscles</Text>
           <View style={styles.modalTagRow}>
             {exercise.muscles.map(m => (
@@ -225,7 +218,6 @@ function ExerciseModal({
             ))}
           </View>
 
-          {/* Instructions */}
           <Text style={styles.modalSectionLabel}>Instructions</Text>
           {exercise.instructions.map((step, i) => (
             <View key={i} style={styles.stepRow}>
@@ -236,7 +228,6 @@ function ExerciseModal({
             </View>
           ))}
 
-          {/* Pro Tip */}
           <View style={styles.proTipCard}>
             <View style={styles.proTipHeader}>
               <Text style={styles.proTipIcon}>⚡</Text>
@@ -267,7 +258,6 @@ function ExerciseCard({
 
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.88} onPress={onPress}>
-      {/* Image */}
       <View style={styles.cardImageWrapper}>
         <View style={[styles.cardImagePlaceholder, { backgroundColor: '#0c1120' }]} />
         <Animated.Image
@@ -276,15 +266,12 @@ function ExerciseCard({
           resizeMode="cover"
           onLoad={onLoad}
         />
-        {/* Gradient overlay at bottom */}
         <View style={styles.cardImageGradient} />
-        {/* Difficulty badge */}
         <View style={[styles.diffBadge, styles.cardBadge, { backgroundColor: diff.bg, borderColor: diff.border }]}>
           <Text style={[styles.diffBadgeText, { color: diff.text }]}>{exercise.difficulty}</Text>
         </View>
       </View>
 
-      {/* Content */}
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{exercise.name}</Text>
         <View style={styles.cardMeta}>
@@ -334,7 +321,6 @@ export default function ChestExercises() {
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/exercises')}>
             <Text style={styles.backArrow}>←</Text>
@@ -344,7 +330,6 @@ export default function ChestExercises() {
           <Text style={styles.subtitle}>{filtered.length} exercises available</Text>
         </View>
 
-        {/* Filter tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -371,7 +356,6 @@ export default function ChestExercises() {
           })}
         </ScrollView>
 
-        {/* Exercise Cards */}
         <View style={styles.cardList}>
           {filtered.map(ex => (
             <ExerciseCard key={ex.id} exercise={ex} onPress={() => openExercise(ex)} />
@@ -379,7 +363,6 @@ export default function ChestExercises() {
         </View>
       </ScrollView>
 
-      {/* Detail Modal */}
       {modalVisible && (
         <ExerciseModal exercise={selectedExercise} onClose={closeModal} />
       )}

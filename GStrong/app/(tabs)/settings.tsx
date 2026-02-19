@@ -60,7 +60,6 @@ export default function Settings() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
 
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/profile')}>
             <Text style={styles.backIcon}>‹</Text>
@@ -68,7 +67,6 @@ export default function Settings() {
           <Text style={styles.title}>Settings</Text>
         </View>
 
-        {/* Profile Card */}
         <View style={styles.section}>
           <View style={styles.profileCard}>
             <View style={styles.avatarWrapper}>
@@ -87,7 +85,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Account Section */}
         {renderSectionHeader('ACCOUNT')}
         <View style={styles.section}>
           <View style={styles.groupCard}>
@@ -101,7 +98,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Preferences Section */}
         {renderSectionHeader('PREFERENCES')}
         <View style={styles.section}>
           <View style={styles.groupCard}>
@@ -115,7 +111,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Support Section */}
         {renderSectionHeader('SUPPORT')}
         <View style={styles.section}>
           <View style={styles.groupCard}>
@@ -127,7 +122,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Danger Zone */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.dangerBtn} activeOpacity={0.7}>
             <Text style={styles.dangerIcon}>↪</Text>
@@ -141,9 +135,6 @@ export default function Settings() {
             <Text style={styles.dangerText}>Delete Account</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.versionText}>GStrong Fitness v1.0 • Build 245</Text>
-
       </ScrollView>
     </View>
   );

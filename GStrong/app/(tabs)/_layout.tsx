@@ -201,6 +201,13 @@ const TabsLayout = () => {
             headerShown: false,
         }}
         />
+        <Tabs.Screen
+        name="achievements"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
 
       </Tabs>
       

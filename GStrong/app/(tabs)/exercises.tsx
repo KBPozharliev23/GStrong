@@ -129,13 +129,11 @@ export default function ExercisesPage() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Exercises</Text>
           <Text style={styles.subtitle}>Browse exercises by muscle group</Text>
         </View>
 
-        {/* Search */}
         <View style={styles.section}>
           <View style={styles.searchBox}>
             <Text style={styles.searchIcon}>🔍</Text>
@@ -149,7 +147,6 @@ export default function ExercisesPage() {
           </View>
         </View>
 
-        {/* Muscle Group Cards */}
         <View style={styles.section}>
           {filtered.map(group => (
             <TouchableOpacity
@@ -161,7 +158,6 @@ export default function ExercisesPage() {
                 selected === group.id && styles.groupCardSelected,
               ]}
             >
-              {/* Thumbnail */}
               <View style={styles.thumbnailWrapper}>
                 {group.image ? (
                   <Image
@@ -176,7 +172,6 @@ export default function ExercisesPage() {
                 )}
               </View>
 
-              {/* Info */}
               <View style={styles.groupInfo}>
                 <Text style={styles.groupName}>{group.name}</Text>
                 <Text style={styles.groupCount}>{group.count} exercises</Text>
@@ -189,13 +184,11 @@ export default function ExercisesPage() {
                 </View>
               </View>
 
-              {/* Chevron */}
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Popular This Week */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular This Week</Text>
           <View style={styles.popularGrid}>

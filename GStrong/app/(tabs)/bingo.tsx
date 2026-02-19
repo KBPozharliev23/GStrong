@@ -222,16 +222,13 @@ export default function WeeklyBingo() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
 
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Weekly Bingo</Text>
             <View style={styles.headerActions}>
-              {/* Share button */}
               <TouchableOpacity style={styles.iconBtn} onPress={openShareModal}>
                 <Text style={styles.iconBtnText}>⬆</Text>
               </TouchableOpacity>
-              {/* Reset button */}
               <TouchableOpacity style={styles.iconBtn} onPress={handleReset}>
                 <Text style={styles.iconBtnText}>↺</Text>
               </TouchableOpacity>
@@ -240,7 +237,6 @@ export default function WeeklyBingo() {
           <Text style={styles.subtitle}>Complete 5 in a row to win!</Text>
         </View>
 
-        {/* Timer + Points Row */}
         <View style={styles.section}>
           <View style={styles.timerCard}>
             <View style={styles.timerLeft}>
@@ -257,7 +253,6 @@ export default function WeeklyBingo() {
           </View>
         </View>
 
-        {/* Stats Row */}
         <View style={styles.section}>
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
@@ -275,14 +270,12 @@ export default function WeeklyBingo() {
           </View>
         </View>
 
-        {/* Progress bar */}
         <View style={styles.section}>
           <View style={styles.progressBarBg}>
             <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
           </View>
         </View>
 
-        {/* Category Filter */}
         <View style={styles.section}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
             {CATEGORIES.map(cat => (
@@ -299,7 +292,6 @@ export default function WeeklyBingo() {
           </ScrollView>
         </View>
 
-        {/* Bingo Grid */}
         <View style={styles.section}>
           <View style={styles.grid}>
             {flatTasks.map((task, index) => {
@@ -334,7 +326,6 @@ export default function WeeklyBingo() {
           </View>
         </View>
 
-        {/* Achievements */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Achievements</Text>
           <View style={styles.achievementsGrid}>
@@ -349,7 +340,6 @@ export default function WeeklyBingo() {
         </View>
       </ScrollView>
 
-      {/* ── Line Complete Popup ── */}
       {showLinePopup && (
         <Modal transparent animationType="none">
           <View style={styles.linePopupOverlay}>
@@ -362,17 +352,13 @@ export default function WeeklyBingo() {
         </Modal>
       )}
 
-      {/* ── Share Progress Modal ── */}
       {showShareModal && (
         <Modal transparent animationType="none" onRequestClose={closeShareModal}>
-          {/* Backdrop */}
           <TouchableOpacity style={styles.shareBackdrop} activeOpacity={1} onPress={closeShareModal}>
             <Animated.View style={{ flex: 1, opacity: shareModalOpacity, backgroundColor: 'rgba(0,0,0,0.6)' }} />
           </TouchableOpacity>
 
-          {/* Sheet */}
           <Animated.View style={[styles.shareSheet, { transform: [{ translateY: shareModalY }] }]}>
-            {/* Header */}
             <View style={styles.shareHeader}>
               <Text style={styles.shareTitle}>Share Progress</Text>
               <TouchableOpacity onPress={closeShareModal} style={styles.shareCloseBtn}>
@@ -380,7 +366,6 @@ export default function WeeklyBingo() {
               </TouchableOpacity>
             </View>
 
-            {/* Stats card */}
             <View style={styles.shareStatsCard}>
               <Text style={styles.shareStatsMain}>{completedCount}/25</Text>
               <Text style={styles.shareStatsLabel}>Tasks Completed</Text>
@@ -388,7 +373,6 @@ export default function WeeklyBingo() {
               <Text style={styles.shareStatsPoints}>{totalPoints} Total Points</Text>
             </View>
 
-            {/* Action buttons */}
             <View style={styles.shareActions}>
               <TouchableOpacity style={styles.shareActionBtn} onPress={handleShare}>
                 <Text style={styles.shareActionIcon}>⬆</Text>

@@ -99,12 +99,15 @@ export default function Profile() {
     if (label === 'Settings') {
       router.replace('/settings');
     }
+    if (label === 'Achievements') {
+      router.push('/achievements');
+}
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
-        {/* Header */}
+        
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>{activeTab === 'profile' ? 'Profile' : 'Your Progress'}</Text>
@@ -114,7 +117,7 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Tab Switch */}
+        
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'profile' && styles.tabActive]}
@@ -132,7 +135,7 @@ export default function Profile() {
 
         {activeTab === 'profile' ? (
           <>
-            {/* Profile Card */}
+            
             <View style={styles.section}>
               <View style={styles.profileCard}>
                 <View style={styles.profileTop}>
@@ -171,7 +174,7 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Level Card */}
+            
             <View style={styles.section}>
               <View style={styles.levelCard}>
                 <View style={styles.levelRow}>
@@ -188,7 +191,7 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Menu Items */}
+            
             <View style={styles.section}>
               <View style={styles.menuList}>
                 {menuItems.map((item, index) => (
@@ -210,11 +213,10 @@ export default function Profile() {
               </View>
             </View>
 
-            <Text style={styles.versionText}>Liftoff Fitness v1.2.0</Text>
+            <Text style={styles.versionText}>GStrong Fitness v1.0</Text>
           </>
         ) : (
           <>
-            {/* Streak Card */}
             <View style={styles.section}>
               <View style={styles.streakCard}>
                 <View style={styles.streakTop}>
@@ -246,7 +248,6 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Points + Weekly Goal */}
             <View style={styles.section}>
               <View style={styles.twoColRow}>
                 <View style={styles.metricCard}>
@@ -262,7 +263,6 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Weekly Activity Chart */}
             <View style={styles.section}>
               <View style={styles.chartCard}>
                 <View style={styles.chartHeader}>
@@ -283,7 +283,6 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Monthly Points Chart */}
             <View style={styles.section}>
               <View style={styles.chartCard}>
                 <Text style={styles.chartTitle}>Monthly Points</Text>
@@ -309,7 +308,6 @@ export default function Profile() {
               </View>
             </View>
 
-            {/* Recent Achievements */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Recent Achievements</Text>
               <View style={styles.achievementsList}>

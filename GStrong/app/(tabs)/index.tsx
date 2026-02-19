@@ -4,7 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 export default function FitnessDashboard() {
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}> 
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}> 
         <View style={styles.header}>
           <Text style={styles.title}>Welcome back!</Text>
           <Text style={styles.subtitle}>Let's crush your goals today</Text>
@@ -79,8 +79,8 @@ export default function FitnessDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black' },
-  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: '#060a14' },
+  header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20,   marginTop:10 },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white', marginBottom: 6 },
   subtitle: { color: '#9ca3af' },
 

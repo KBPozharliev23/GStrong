@@ -1,14 +1,17 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
     "jsx": "react-jsx",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -24,6 +27,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

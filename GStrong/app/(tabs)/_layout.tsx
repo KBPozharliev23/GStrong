@@ -209,7 +209,28 @@ const TabsLayout = () => {
         }}
         />
         <Tabs.Screen
+        name="legs"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
         name="shoulders"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
+        name="arms"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
+        name="core"
         options={{
             href: null,
             headerShown: false,

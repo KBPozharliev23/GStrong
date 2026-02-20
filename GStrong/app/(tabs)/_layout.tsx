@@ -208,6 +208,13 @@ const TabsLayout = () => {
             headerShown: false,
         }}
         />
+        <Tabs.Screen
+        name="editProfile"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
 
       </Tabs>
       

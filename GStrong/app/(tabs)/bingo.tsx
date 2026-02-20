@@ -9,7 +9,6 @@ import {
   Modal,
   Dimensions,
   Share,
-  Alert,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -81,65 +80,72 @@ const CELL_SIZE = (width - 28 - 16) / 5;
 export default function WeeklyBingo() {
   const flatTasks = bingoGrid.flat();
 
-  const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set([10])); // FREE is index 10
+  const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set([10]));
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [completedLines, setCompletedLines] = useState<Set<number>>(new Set());
   const [totalPoints, setTotalPoints] = useState(0);
 
-  // Line complete popup
   const [showLinePopup, setShowLinePopup] = useState(false);
   const linePopupScale = useRef(new Animated.Value(0)).current;
   const linePopupOpacity = useRef(new Animated.Value(0)).current;
 
-  // Share progress modal
+  const [showResetPopup, setShowResetPopup] = useState(false);
+  const resetPopupScale = useRef(new Animated.Value(0)).current;
+  const resetPopupOpacity = useRef(new Animated.Value(0)).current;
+
+  const [showResetSuccessPopup, setShowResetSuccessPopup] = useState(false);
+  const resetSuccessScale = useRef(new Animated.Value(0)).current;
+  const resetSuccessOpacity = useRef(new Animated.Value(0)).current;
+
   const [showShareModal, setShowShareModal] = useState(false);
   const shareModalY = useRef(new Animated.Value(300)).current;
   const shareModalOpacity = useRef(new Animated.Value(0)).current;
 
-  // ── Line check ──────────────────────────────────────────────
+  const animatePopupIn = (scale: Animated.Value, opacity: Animated.Value) => {
+    scale.setValue(0);
+    opacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
+      Animated.timing(opacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const animatePopupOut = (scale: Animated.Value, opacity: Animated.Value, onDone?: () => void) => {
+    Animated.parallel([
+      Animated.timing(scale, { toValue: 0.85, duration: 150, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0, duration: 150, useNativeDriver: true }),
+    ]).start(() => onDone && onDone());
+  };
+
   const checkLines = (completed: Set<number>, currentLines: Set<number>) => {
     const newCompletedLines = new Set(currentLines);
     let found = false;
-
     LINES.forEach((line, idx) => {
       if (!currentLines.has(idx) && line.every(i => completed.has(i))) {
         newCompletedLines.add(idx);
         found = true;
       }
     });
-
     if (found) {
       setCompletedLines(newCompletedLines);
       triggerLinePopup();
     }
-
     return newCompletedLines;
   };
 
   const triggerLinePopup = () => {
     setShowLinePopup(true);
-    linePopupScale.setValue(0);
-    linePopupOpacity.setValue(0);
-    Animated.parallel([
-      Animated.spring(linePopupScale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
-      Animated.timing(linePopupOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
-    ]).start();
+    animatePopupIn(linePopupScale, linePopupOpacity);
     setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(linePopupScale, { toValue: 0.85, duration: 120, useNativeDriver: true }),
-        Animated.timing(linePopupOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
-      ]).start(() => setShowLinePopup(false));
+      animatePopupOut(linePopupScale, linePopupOpacity, () => setShowLinePopup(false));
     }, 1500);
   };
 
-  // ── Toggle task ──────────────────────────────────────────────
   const toggleTask = (index: number) => {
     const task = flatTasks[index];
     if (task.label === 'FREE') return;
-
     const newCompleted = new Set(completedTasks);
     let delta = 0;
-
     if (newCompleted.has(index)) {
       newCompleted.delete(index);
       delta = -task.points;
@@ -147,33 +153,34 @@ export default function WeeklyBingo() {
       newCompleted.add(index);
       delta = task.points;
     }
-
     setCompletedTasks(newCompleted);
     setTotalPoints(p => p + delta);
     checkLines(newCompleted, completedLines);
   };
 
-  // ── Reset ────────────────────────────────────────────────────
   const handleReset = () => {
-    Alert.alert(
-      'Reset Board',
-      'Are you sure you want to reset your progress?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            setCompletedTasks(new Set([10]));
-            setCompletedLines(new Set());
-            setTotalPoints(0);
-          },
-        },
-      ]
-    );
+    setShowResetPopup(true);
+    animatePopupIn(resetPopupScale, resetPopupOpacity);
   };
 
-  // ── Share modal ──────────────────────────────────────────────
+  const confirmReset = () => {
+    animatePopupOut(resetPopupScale, resetPopupOpacity, () => {
+      setShowResetPopup(false);
+      setCompletedTasks(new Set([10]));
+      setCompletedLines(new Set());
+      setTotalPoints(0);
+      setShowResetSuccessPopup(true);
+      animatePopupIn(resetSuccessScale, resetSuccessOpacity);
+      setTimeout(() => {
+        animatePopupOut(resetSuccessScale, resetSuccessOpacity, () => setShowResetSuccessPopup(false));
+      }, 1800);
+    });
+  };
+
+  const cancelReset = () => {
+    animatePopupOut(resetPopupScale, resetPopupOpacity, () => setShowResetPopup(false));
+  };
+
   const openShareModal = () => {
     setShowShareModal(true);
     shareModalY.setValue(400);
@@ -201,12 +208,9 @@ export default function WeeklyBingo() {
     closeShareModal();
   };
 
-  // ── Derived state ────────────────────────────────────────────
   const completedCount = completedTasks.size;
   const progressPercentage = Math.round((completedCount / 25) * 100);
-
-  const isTaskVisible = (task: Task) =>
-    selectedCategory === 'All' || task.category === selectedCategory;
+  const isTaskVisible = (task: Task) => selectedCategory === 'All' || task.category === selectedCategory;
 
   const achievements = [
     { id: 'first_line', icon: '🥇', title: 'First Line', desc: 'Complete 1 line', unlocked: completedLines.size >= 1 },
@@ -300,7 +304,6 @@ export default function WeeklyBingo() {
               const visible = isTaskVisible(task) || isFree;
               const dimmed = !visible;
               const isLineCell = Array.from(completedLines).some(li => LINES[li]?.includes(index));
-
               return (
                 <TouchableOpacity
                   key={index}
@@ -316,9 +319,7 @@ export default function WeeklyBingo() {
                   ]}
                 >
                   <View style={[styles.categoryDot, { backgroundColor: getCategoryDot(task) }]} />
-                  {isCompleted && !isFree && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
+                  {isCompleted && !isFree && <Text style={styles.checkmark}>✓</Text>}
                   <Text style={[styles.gridText, dimmed && styles.gridTextDimmed]}>{task.label}</Text>
                 </TouchableOpacity>
               );
@@ -340,24 +341,59 @@ export default function WeeklyBingo() {
         </View>
       </ScrollView>
 
+      {/* Line Complete Popup */}
       {showLinePopup && (
         <Modal transparent animationType="none">
-          <View style={styles.linePopupOverlay}>
+          <View style={styles.popupOverlay}>
             <Animated.View style={[styles.linePopupCard, { transform: [{ scale: linePopupScale }], opacity: linePopupOpacity }]}>
-              <Text style={styles.linePopupIcon}>🏆</Text>
-              <Text style={styles.linePopupTitle}>Line Complete!</Text>
+              <Text style={styles.popupIcon}>🏆</Text>
+              <Text style={styles.popupTitle}>Line Complete!</Text>
               <Text style={styles.linePopupSubtitle}>+100 Bonus Points</Text>
             </Animated.View>
           </View>
         </Modal>
       )}
 
+      {/* Reset Confirm Popup */}
+      {showResetPopup && (
+        <Modal transparent animationType="none">
+          <View style={styles.popupOverlay}>
+            <Animated.View style={[styles.resetConfirmCard, { transform: [{ scale: resetPopupScale }], opacity: resetPopupOpacity }]}>
+              <Text style={styles.popupIcon}>⚠️</Text>
+              <Text style={styles.popupTitle}>Reset Board?</Text>
+              <Text style={styles.resetConfirmSubtitle}>All your progress will be lost</Text>
+              <View style={styles.resetBtnRow}>
+                <TouchableOpacity style={styles.resetCancelBtn} onPress={cancelReset} activeOpacity={0.8}>
+                  <Text style={styles.resetCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.resetConfirmBtn} onPress={confirmReset} activeOpacity={0.8}>
+                  <Text style={styles.resetConfirmText}>Reset</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Reset Success Popup */}
+      {showResetSuccessPopup && (
+        <Modal transparent animationType="none">
+          <View style={styles.popupOverlay}>
+            <Animated.View style={[styles.resetSuccessCard, { transform: [{ scale: resetSuccessScale }], opacity: resetSuccessOpacity }]}>
+              <Text style={styles.popupIcon}>✅</Text>
+              <Text style={styles.popupTitle}>Board Reset!</Text>
+              <Text style={styles.resetSuccessSubtitle}>Your progress has been cleared</Text>
+            </Animated.View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Share Modal */}
       {showShareModal && (
         <Modal transparent animationType="none" onRequestClose={closeShareModal}>
           <TouchableOpacity style={styles.shareBackdrop} activeOpacity={1} onPress={closeShareModal}>
             <Animated.View style={{ flex: 1, opacity: shareModalOpacity, backgroundColor: 'rgba(0,0,0,0.6)' }} />
           </TouchableOpacity>
-
           <Animated.View style={[styles.shareSheet, { transform: [{ translateY: shareModalY }] }]}>
             <View style={styles.shareHeader}>
               <Text style={styles.shareTitle}>Share Progress</Text>
@@ -365,25 +401,21 @@ export default function WeeklyBingo() {
                 <Text style={styles.shareCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
-
             <View style={styles.shareStatsCard}>
               <Text style={styles.shareStatsMain}>{completedCount}/25</Text>
               <Text style={styles.shareStatsLabel}>Tasks Completed</Text>
               <Text style={styles.shareStatsLines}>{completedLines.size} Lines</Text>
               <Text style={styles.shareStatsPoints}>{totalPoints} Total Points</Text>
             </View>
-
             <View style={styles.shareActions}>
               <TouchableOpacity style={styles.shareActionBtn} onPress={handleShare}>
                 <Text style={styles.shareActionIcon}>⬆</Text>
                 <Text style={styles.shareActionLabel}>Share</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.shareActionBtn}>
                 <Text style={styles.shareActionIcon}>📋</Text>
                 <Text style={styles.shareActionLabel}>History</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.shareActionBtn}>
                 <Text style={styles.shareActionIcon}>🏆</Text>
                 <Text style={styles.shareActionLabel}>Leaderboard</Text>
@@ -503,8 +535,15 @@ const styles = StyleSheet.create({
   achievementTitle: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   achievementDesc: { color: '#6b7280', fontSize: 11, marginTop: 2 },
 
-  // ── Line complete popup ──
-  linePopupOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
+  popupOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  popupIcon: { fontSize: 48, marginBottom: 10 },
+  popupTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
+
   linePopupCard: {
     backgroundColor: '#130e02',
     borderColor: '#d97706',
@@ -518,11 +557,64 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     shadowOffset: { width: 0, height: 0 },
   },
-  linePopupIcon: { fontSize: 48, marginBottom: 10 },
-  linePopupTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   linePopupSubtitle: { color: '#fbbf24', fontSize: 15, marginTop: 5, fontWeight: '600' },
 
-  // ── Share modal ──
+  resetConfirmCard: {
+    backgroundColor: '#1a0a0a',
+    borderColor: '#ef4444',
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+    alignItems: 'center',
+    shadowColor: '#ef4444',
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 0 },
+    maxWidth: 350,
+  },
+  resetConfirmSubtitle: { color: '#f87171', fontSize: 13, marginTop: 5, fontWeight: '500' },
+  resetBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+  },
+  resetCancelBtn: {
+    flex: 1,
+    backgroundColor: '#1a2540',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1a2540',
+  },
+  resetCancelText: { color: '#9ca3af', fontSize: 15, fontWeight: '600' },
+  resetConfirmBtn: {
+    flex: 1,
+    backgroundColor: '#450a0a',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  resetConfirmText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
+
+  resetSuccessCard: {
+    backgroundColor: '#020f1f',
+    borderColor: '#2563eb',
+    borderWidth: 1.5,
+    borderRadius: 24,
+    paddingHorizontal: 48,
+    paddingVertical: 32,
+    alignItems: 'center',
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.5,
+    shadowRadius: 40,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  resetSuccessSubtitle: { color: '#60a5fa', fontSize: 15, marginTop: 5, fontWeight: '600' },
+
   shareBackdrop: { ...StyleSheet.absoluteFillObject },
   shareSheet: {
     position: 'absolute',
@@ -545,14 +637,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   shareTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-  shareCloseBtn: {
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  shareCloseBtn: { width: 30, height: 30, justifyContent: 'center', alignItems: 'center' },
   shareCloseText: { color: '#6b7280', fontSize: 16 },
-
   shareStatsCard: {
     backgroundColor: '#1a2a4a',
     borderRadius: 18,
@@ -566,12 +652,7 @@ const styles = StyleSheet.create({
   shareStatsLabel: { color: '#94a3b8', fontSize: 13, marginBottom: 10 },
   shareStatsLines: { color: '#facc15', fontSize: 22, fontWeight: 'bold' },
   shareStatsPoints: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
-
-  shareActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
+  shareActions: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   shareActionBtn: {
     flex: 1,
     backgroundColor: '#1a2a4a',

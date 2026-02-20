@@ -18,12 +18,21 @@ export default function Settings() {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const router = useRouter();
 
+  const handleNavPress = (label: string) => {
+    if (label === 'Edit Profile') {
+      router.replace('/(tabs)/editProfile');
+    }
+    if (label === 'Email Preferences') {
+      router.replace('/(tabs)/emailPreferences');
+    }
+  };
+
   const renderSectionHeader = (title: string) => (
     <Text style={styles.sectionHeader}>{title}</Text>
   );
 
   const renderNavItem = (icon: string, label: string, rightText?: string) => (
-    <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => handleNavPress(label)}>
       <View style={styles.iconWrap}>
         <Text style={styles.iconText}>{icon}</Text>
       </View>
@@ -76,11 +85,8 @@ export default function Settings() {
               />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>Alex Johnson</Text>
-              <Text style={styles.profileEmail}>alex.johnson@example.com</Text>
-              <TouchableOpacity>
-                <Text style={styles.manageText}>Manage Subscription</Text>
-              </TouchableOpacity>
+              <Text style={styles.profileName}>George Strong</Text>
+              <Text style={styles.profileEmail}>george.strong@gmail.com</Text>
             </View>
           </View>
         </View>
@@ -161,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: { color: '#3b82f6', fontSize: 26, lineHeight: 30, marginLeft: -2 },
+  backIcon: { color: '#3b82f6', fontSize: 26, lineHeight: 27, marginLeft: -2 },
   title: { fontSize: 26, fontWeight: 'bold', color: 'white' },
 
   section: { paddingHorizontal: 14, marginBottom: 6 },
@@ -204,7 +210,6 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1 },
   profileName: { color: 'white', fontSize: 17, fontWeight: 'bold' },
   profileEmail: { color: '#6b7280', fontSize: 12, marginTop: 2 },
-  manageText: { color: '#3b82f6', fontSize: 12, marginTop: 4, fontWeight: '600' },
 
   groupCard: {
     backgroundColor: '#0c1120',

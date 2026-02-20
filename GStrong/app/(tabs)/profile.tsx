@@ -82,7 +82,7 @@ const achievements = [
 
 const menuItems = [
   { icon: '⚙️', label: 'Settings', color: '#3b82f6', bg: '#172554' },
-  { icon: '🏅', label: 'Achievements', color: '#d97706', bg: '#422006', badge: 12 },
+  { icon: '🏅', label: 'Achievements', color: '#d97706', bg: '#422006', badge: 2 },
   { icon: '🔔', label: 'Notifications', color: '#3b82f6', bg: '#172554' },
   { icon: '❓', label: 'Help & Support', color: '#6366f1', bg: '#1e1b4b' },
   { icon: '🚪', label: 'Log Out', color: '#ef4444', bg: '#450a0a' },
@@ -100,8 +100,8 @@ export default function Profile() {
       router.replace('/settings');
     }
     if (label === 'Achievements') {
-      router.push('/achievements');
-}
+      router.replace('/achievements');
+      }
   };
 
   return (
@@ -146,7 +146,7 @@ export default function Profile() {
                     />
                   </View>
                   <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>Alex Johnson</Text>
+                    <Text style={styles.profileName}>George Strong</Text>
                   </View>
                   <TouchableOpacity>
                     <Text style={styles.editText}>Edit</Text>
@@ -457,7 +457,6 @@ const styles = StyleSheet.create({
 
   versionText: { color: '#374151', fontSize: 12, textAlign: 'center', marginTop: 8 },
 
-  // Progress styles
   streakCard: {
     backgroundColor: '#0c1120',
     borderRadius: 20,

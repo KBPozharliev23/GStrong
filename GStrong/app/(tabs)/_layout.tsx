@@ -202,6 +202,20 @@ const TabsLayout = () => {
         }}
         />
         <Tabs.Screen
+        name="back"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
+        name="shoulders"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
         name="achievements"
         options={{
             href: null,

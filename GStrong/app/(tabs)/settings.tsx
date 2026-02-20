@@ -22,6 +22,9 @@ export default function Settings() {
     if (label === 'Edit Profile') {
       router.replace('/(tabs)/editProfile');
     }
+    if (label === 'Email Preferences') {
+      router.replace('/(tabs)/emailPreferences');
+    }
   };
 
   const renderSectionHeader = (title: string) => (

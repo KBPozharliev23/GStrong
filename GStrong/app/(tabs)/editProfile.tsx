@@ -21,8 +21,8 @@ const PRIMARY_GOALS = ['Weight Loss', 'Muscle Gain', 'Endurance', 'Flexibility',
 export default function EditProfile() {
   const router = useRouter();
 
-  const [fullName, setFullName] = useState('George Strong');
-  const [email, setEmail] = useState('george.strong@gmail.com');
+  const [fullName, setFullName] = useState('Alex Johnson');
+  const [email, setEmail] = useState('alex.j@example.com');
   const [bio, setBio] = useState('Fitness enthusiast improving every day 🚀');
   const [height, setHeight] = useState('178');
   const [weight, setWeight] = useState('75');
@@ -30,10 +30,9 @@ export default function EditProfile() {
   const [primaryGoal, setPrimaryGoal] = useState('Muscle Gain');
   const [saving, setSaving] = useState(false);
 
-  const [showExpDropdown, setShowExpDropdown] = useState(false);
-  const [showGoalDropdown, setShowGoalDropdown] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  // Save popup
   const [showSavePopup, setShowSavePopup] = useState(false);
   const popupScale = useRef(new Animated.Value(0)).current;
   const popupOpacity = useRef(new Animated.Value(0)).current;
@@ -102,7 +101,6 @@ export default function EditProfile() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backIcon}>‹</Text>
@@ -113,7 +111,6 @@ export default function EditProfile() {
           </View>
         </View>
 
-        {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
             <Image
@@ -129,12 +126,10 @@ export default function EditProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Personal Info */}
         {renderSectionHeader('PERSONAL INFO')}
         <View style={styles.section}>
           <View style={styles.groupCard} collapsable={false}>
 
-            {/* Full Name */}
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Full Name</Text>
               <View style={inputStyle('name')} collapsable={false}>
@@ -152,7 +147,6 @@ export default function EditProfile() {
 
             <View style={styles.separator} />
 
-            {/* Email */}
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Email</Text>
               <View style={inputStyle('email')} collapsable={false}>
@@ -172,7 +166,6 @@ export default function EditProfile() {
 
             <View style={styles.separator} />
 
-            {/* Bio */}
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Bio</Text>
               <View style={[inputStyle('bio'), styles.bioInput]} collapsable={false}>
@@ -192,7 +185,6 @@ export default function EditProfile() {
           </View>
         </View>
 
-        {/* Physical Stats */}
         {renderSectionHeader('PHYSICAL STATS')}
         <View style={styles.section}>
           <View style={styles.statsRow}>
@@ -236,93 +228,71 @@ export default function EditProfile() {
           </View>
         </View>
 
-        {/* Fitness Preferences */}
         {renderSectionHeader('FITNESS PREFERENCES')}
         <View style={styles.section}>
           <View style={styles.groupCard}>
 
-            {/* Experience Level */}
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Experience Level</Text>
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => {
-                  setShowExpDropdown(!showExpDropdown);
-                  setShowGoalDropdown(false);
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.fieldIcon}>〰️</Text>
-                <Text style={styles.dropdownText}>{experienceLevel}</Text>
-                <Text style={styles.dropdownChevron}>▾</Text>
-              </TouchableOpacity>
-              {showExpDropdown && (
-                <View style={styles.dropdownMenu}>
-                  {EXPERIENCE_LEVELS.map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      style={[
-                        styles.dropdownOption,
-                        experienceLevel === level && styles.dropdownOptionActive,
-                      ]}
-                      onPress={() => {
-                        setExperienceLevel(level);
-                        setShowExpDropdown(false);
-                      }}
-                    >
-                      <Text style={[
-                        styles.dropdownOptionText,
-                        experienceLevel === level && styles.dropdownOptionTextActive,
-                      ]}>
-                        {level}
+              <View style={styles.levelCardsWrap}>
+                {[
+                  { value: 'Beginner', icon: '🌱', desc: 'Just starting out' },
+                  { value: 'Intermediate', icon: '💪', desc: 'Some experience' },
+                  { value: 'Advanced', icon: '🔥', desc: 'Regular training' },
+                  { value: 'Elite', icon: '⚡', desc: 'Years of experience' },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[styles.levelCard, experienceLevel === item.value && styles.levelCardActive]}
+                    onPress={() => setExperienceLevel(item.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.levelIcon}>{item.icon}</Text>
+                    <View style={styles.levelInfo}>
+                      <Text style={[styles.levelTitle, experienceLevel === item.value && styles.levelTitleActive]}>
+                        {item.value}
                       </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+                      <Text style={styles.levelDesc}>{item.desc}</Text>
+                    </View>
+                    {experienceLevel === item.value && (
+                      <Text style={styles.levelCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             <View style={styles.separator} />
 
-            {/* Primary Goal */}
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Primary Goal</Text>
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => {
-                  setShowGoalDropdown(!showGoalDropdown);
-                  setShowExpDropdown(false);
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.fieldIcon}>🎯</Text>
-                <Text style={styles.dropdownText}>{primaryGoal}</Text>
-                <Text style={styles.dropdownChevron}>▾</Text>
-              </TouchableOpacity>
-              {showGoalDropdown && (
-                <View style={styles.dropdownMenu}>
-                  {PRIMARY_GOALS.map((goal) => (
-                    <TouchableOpacity
-                      key={goal}
-                      style={[
-                        styles.dropdownOption,
-                        primaryGoal === goal && styles.dropdownOptionActive,
-                      ]}
-                      onPress={() => {
-                        setPrimaryGoal(goal);
-                        setShowGoalDropdown(false);
-                      }}
-                    >
-                      <Text style={[
-                        styles.dropdownOptionText,
-                        primaryGoal === goal && styles.dropdownOptionTextActive,
-                      ]}>
-                        {goal}
+              <View style={styles.goalCardsWrap}>
+                {[
+                  { value: 'Weight Loss', icon: '📉', desc: 'Burn fat & slim down' },
+                  { value: 'Muscle Gain', icon: '💪', desc: 'Build strength & size' },
+                  { value: 'Endurance', icon: '🏃', desc: 'Improve stamina' },
+                  { value: 'Flexibility', icon: '🧘', desc: 'Stretch & mobility' },
+                  { value: 'General Fitness', icon: '⚡', desc: 'Stay healthy & active' },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[styles.levelCard, primaryGoal === item.value && styles.levelCardActive]}
+                    onPress={() => setPrimaryGoal(item.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.levelIcon}>{item.icon}</Text>
+                    <View style={styles.levelInfo}>
+                      <Text style={[styles.levelTitle, primaryGoal === item.value && styles.levelTitleActive]}>
+                        {item.value}
                       </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+                      <Text style={styles.levelDesc}>{item.desc}</Text>
+                    </View>
+                    {primaryGoal === item.value && (
+                      <Text style={styles.levelCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
           </View>
@@ -330,7 +300,6 @@ export default function EditProfile() {
 
       </ScrollView>
 
-      {/* Save Button */}
       <View style={styles.saveContainer}>
         <TouchableOpacity
           style={styles.saveBtn}
@@ -349,7 +318,6 @@ export default function EditProfile() {
         </TouchableOpacity>
       </View>
 
-      {/* Save Confirmation Popup */}
       {showSavePopup && (
         <Modal transparent animationType="none">
           <View style={styles.popupOverlay}>
@@ -392,7 +360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: { color: '#3b82f6', fontSize: 26, lineHeight: 27, marginLeft: -2 },
+  backIcon: { color: '#3b82f6', fontSize: 26, lineHeight: 30, marginLeft: -2 },
   title: { fontSize: 26, fontWeight: 'bold', color: 'white' },
   subtitle: { fontSize: 13, color: '#6b7280', marginTop: 1 },
 
@@ -529,6 +497,29 @@ const styles = StyleSheet.create({
   dropdownOptionActive: { backgroundColor: '#1e3a6e' },
   dropdownOptionText: { color: '#9ca3af', fontSize: 14, fontWeight: '500' },
   dropdownOptionTextActive: { color: '#3b82f6', fontWeight: '700' },
+
+  levelCardsWrap: { gap: 8 },
+  goalCardsWrap: { gap: 8 },
+  levelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#131d33',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#1a2540',
+    gap: 12,
+  },
+  levelCardActive: {
+    borderColor: '#2563eb',
+    backgroundColor: '#0f1e3d',
+  },
+  levelIcon: { fontSize: 26 },
+  levelInfo: { flex: 1 },
+  levelTitle: { color: '#9ca3af', fontSize: 15, fontWeight: '600' },
+  levelTitleActive: { color: 'white' },
+  levelDesc: { color: '#4b5563', fontSize: 12, marginTop: 2 },
+  levelCheck: { color: '#3b82f6', fontSize: 18, fontWeight: 'bold' },
 
   separator: { height: 1, backgroundColor: '#1a2540' },
 

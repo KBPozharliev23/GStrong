@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  Modal,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
@@ -85,23 +86,21 @@ const menuItems = [
   { icon: '🏅', label: 'Achievements', color: '#d97706', bg: '#422006', badge: 2 },
   { icon: '🔔', label: 'Notifications', color: '#3b82f6', bg: '#172554' },
   { icon: '❓', label: 'Help & Support', color: '#6366f1', bg: '#1e1b4b' },
-  { icon: '🚪', label: 'Log Out', color: '#ef4444', bg: '#450a0a' },
+  { icon: '↪', label: 'Log Out', color: '#ef4444', bg: '#450a0a' },
 ];
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState<'profile' | 'progress'>('profile');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
 
   const streakDays = 12;
   const totalDays = 7;
 
   const handleMenuPress = (label: string) => {
-    if (label === 'Settings') {
-      router.replace('/settings');
-    }
-    if (label === 'Achievements') {
-      router.replace('/achievements');
-      }
+    if (label === 'Settings') router.replace('/settings');
+    if (label === 'Achievements') router.replace('/achievements');
+    if (label === 'Log Out') setShowLogoutModal(true);
   };
 
   return (
@@ -117,7 +116,6 @@ export default function Profile() {
           </View>
         </View>
 
-        
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'profile' && styles.tabActive]}
@@ -135,7 +133,6 @@ export default function Profile() {
 
         {activeTab === 'profile' ? (
           <>
-            
             <View style={styles.section}>
               <View style={styles.profileCard}>
                 <View style={styles.profileTop}>
@@ -174,7 +171,6 @@ export default function Profile() {
               </View>
             </View>
 
-            
             <View style={styles.section}>
               <View style={styles.levelCard}>
                 <View style={styles.levelRow}>
@@ -191,7 +187,6 @@ export default function Profile() {
               </View>
             </View>
 
-            
             <View style={styles.section}>
               <View style={styles.menuList}>
                 {menuItems.map((item, index) => (
@@ -328,6 +323,36 @@ export default function Profile() {
           </>
         )}
       </ScrollView>
+
+      {/* Log Out Confirmation Modal */}
+      <Modal transparent visible={showLogoutModal} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmIcon}>↪</Text>
+            <Text style={styles.confirmTitle}>Log Out?</Text>
+            <Text style={styles.confirmSubtitle}>Are you sure you want to log out of your account?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                activeOpacity={0.7}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDangerBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  router.replace('/(auth)');
+                }}
+              >
+                <Text style={styles.confirmDangerBtnText}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -520,4 +545,55 @@ const styles = StyleSheet.create({
   achTitle: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   achDesc: { color: '#6b7280', fontSize: 12, marginTop: 2 },
   achTime: { color: '#4b5563', fontSize: 12 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmCard: {
+    backgroundColor: '#0c1120',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1a2540',
+    width: 300,
+    padding: 28,
+    alignItems: 'center',
+  },
+  confirmIcon: { fontSize: 36, marginBottom: 12 },
+  confirmTitle: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  confirmSubtitle: {
+    color: '#6b7280',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#131d33',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1a2540',
+  },
+  cancelBtnText: { color: '#9ca3af', fontSize: 15, fontWeight: '600' },
+  confirmDangerBtn: {
+    flex: 1,
+    backgroundColor: '#450a0a',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#7f1d1d',
+  },
+  confirmDangerBtnText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
 });

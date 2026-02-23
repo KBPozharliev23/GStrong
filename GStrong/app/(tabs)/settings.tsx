@@ -7,24 +7,28 @@ import {
   StyleSheet,
   Switch,
   Image,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
+const LANGUAGES = ['English', 'Bulgarian'];
 
 export default function Settings() {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const router = useRouter();
 
   const handleNavPress = (label: string) => {
-    if (label === 'Edit Profile') {
-      router.replace('/(tabs)/editProfile');
-    }
-    if (label === 'Email Preferences') {
-      router.replace('/(tabs)/emailPreferences');
-    }
+    if (label === 'Edit Profile') router.replace('/(tabs)/editProfile');
+    if (label === 'Email Preferences') router.replace('/(tabs)/emailPreferences');
+    if (label === 'Change Password') router.replace('/(tabs)/changePassword');
+    if (label === 'Language') setShowLanguagePicker(true);
   };
 
   const renderSectionHeader = (title: string) => (
@@ -100,7 +104,7 @@ export default function Settings() {
             <View style={styles.separator} />
             {renderNavItem('🔒', 'Change Password')}
             <View style={styles.separator} />
-            {renderNavItem('🌐', 'Language', 'English')}
+            {renderNavItem('🌐', 'Language', selectedLanguage)}
           </View>
         </View>
 
@@ -129,19 +133,111 @@ export default function Settings() {
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.dangerBtn} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.dangerBtn} activeOpacity={0.7} onPress={() => setShowLogoutModal(true)}>
             <Text style={styles.dangerIcon}>↪</Text>
             <Text style={styles.dangerText}>Log Out</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.dangerBtn} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.dangerBtn} activeOpacity={0.7} onPress={() => setShowDeleteModal(true)}>
             <Text style={styles.dangerIcon}>🗑</Text>
             <Text style={styles.dangerText}>Delete Account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Language Picker Modal */}
+      <Modal transparent visible={showLanguagePicker} animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLanguagePicker(false)}
+        >
+          <View style={styles.pickerCard}>
+            <Text style={styles.pickerTitle}>Select Language</Text>
+            <View style={styles.pickerDivider} />
+            {LANGUAGES.map((lang, i) => (
+              <React.Fragment key={lang}>
+                <TouchableOpacity
+                  style={styles.pickerOption}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSelectedLanguage(lang);
+                    setShowLanguagePicker(false);
+                  }}
+                >
+                  <Text style={styles.pickerOptionText}>{lang}</Text>
+                  {selectedLanguage === lang && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+                {i < LANGUAGES.length - 1 && <View style={styles.pickerSeparator} />}
+              </React.Fragment>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Log Out Confirmation Modal */}
+      <Modal transparent visible={showLogoutModal} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmIcon}>↪</Text>
+            <Text style={styles.confirmTitle}>Log Out?</Text>
+            <Text style={styles.confirmSubtitle}>Are you sure you want to log out of your account?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                activeOpacity={0.7}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDangerBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  router.replace('/(auth)');
+                }}
+              >
+                <Text style={styles.confirmDangerBtnText}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal transparent visible={showDeleteModal} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmIcon}>🗑</Text>
+            <Text style={styles.confirmTitle}>Delete Account?</Text>
+            <Text style={styles.confirmSubtitle}>This will permanently delete your account and all your data. This cannot be undone.</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                activeOpacity={0.7}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDangerBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  router.replace('/(auth)');
+                }}
+              >
+                <Text style={styles.confirmDangerBtnText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -255,4 +351,87 @@ const styles = StyleSheet.create({
   dangerText: { color: '#ef4444', fontSize: 15, fontWeight: '600' },
 
   versionText: { color: '#374151', fontSize: 12, textAlign: 'center', marginTop: 16, marginBottom: 8 },
+
+  // Shared modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Language picker
+  pickerCard: {
+    backgroundColor: '#0c1120',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1a2540',
+    width: 280,
+    overflow: 'hidden',
+  },
+  pickerTitle: {
+    color: '#9ca3af',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textAlign: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  pickerDivider: { height: 1, backgroundColor: '#1a2540' },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  pickerOptionText: { color: 'white', fontSize: 16, fontWeight: '500' },
+  checkmark: { color: '#2563eb', fontSize: 18, fontWeight: 'bold' },
+  pickerSeparator: { height: 1, backgroundColor: '#1a2540', marginHorizontal: 16 },
+
+  // Confirm modals
+  confirmCard: {
+    backgroundColor: '#0c1120',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1a2540',
+    width: 300,
+    padding: 28,
+    alignItems: 'center',
+  },
+  confirmIcon: { fontSize: 36, marginBottom: 12 },
+  confirmTitle: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  confirmSubtitle: {
+    color: '#6b7280',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#131d33',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1a2540',
+  },
+  cancelBtnText: { color: '#9ca3af', fontSize: 15, fontWeight: '600' },
+  confirmDangerBtn: {
+    flex: 1,
+    backgroundColor: '#450a0a',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#7f1d1d',
+  },
+  confirmDangerBtnText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
 });

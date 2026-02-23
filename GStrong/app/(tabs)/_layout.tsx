@@ -257,6 +257,13 @@ const TabsLayout = () => {
             headerShown: false,
         }}
         />
+        <Tabs.Screen
+        name="changePassword"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
 
       </Tabs>
       

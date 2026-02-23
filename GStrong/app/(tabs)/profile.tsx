@@ -84,7 +84,7 @@ const achievements = [
 const menuItems = [
   { icon: '⚙️', label: 'Settings', color: '#3b82f6', bg: '#172554' },
   { icon: '🏅', label: 'Achievements', color: '#d97706', bg: '#422006', badge: 2 },
-  { icon: '🔔', label: 'Notifications', color: '#3b82f6', bg: '#172554' },
+  { icon: '🔔', label: 'Notifications', color: '#3b82f6', bg: '#172554', badge: 3 },
   { icon: '❓', label: 'Help & Support', color: '#6366f1', bg: '#1e1b4b' },
   { icon: '↪', label: 'Log Out', color: '#ef4444', bg: '#450a0a' },
 ];
@@ -100,7 +100,7 @@ export default function Profile() {
   const handleMenuPress = (label: string) => {
     if (label === 'Settings') router.replace('/settings');
     if (label === 'Achievements') router.replace('/achievements');
-    if (label === 'Notifications') router.replace('/notifications');
+    if (label === 'Notifications') router.replace('/(tabs)/notifications');
     if (label === 'Log Out') setShowLogoutModal(true);
   };
 
@@ -325,6 +325,7 @@ export default function Profile() {
         )}
       </ScrollView>
 
+      {/* Log Out Confirmation Modal */}
       <Modal transparent visible={showLogoutModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmCard}>

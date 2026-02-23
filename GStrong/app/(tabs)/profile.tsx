@@ -100,6 +100,7 @@ export default function Profile() {
   const handleMenuPress = (label: string) => {
     if (label === 'Settings') router.replace('/settings');
     if (label === 'Achievements') router.replace('/achievements');
+    if (label === 'Notifications') router.replace('/notifications');
     if (label === 'Log Out') setShowLogoutModal(true);
   };
 
@@ -324,7 +325,6 @@ export default function Profile() {
         )}
       </ScrollView>
 
-      {/* Log Out Confirmation Modal */}
       <Modal transparent visible={showLogoutModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmCard}>

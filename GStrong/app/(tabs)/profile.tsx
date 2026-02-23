@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
+import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -82,6 +83,7 @@ const achievements = [
 ];
 
 const menuItems = [
+  { icon: '🏋️', label: 'My Workouts', color: '#3b82f6', bg: '#172554' },
   { icon: '⚙️', label: 'Settings', color: '#3b82f6', bg: '#172554' },
   { icon: '🏅', label: 'Achievements', color: '#d97706', bg: '#422006', badge: 2 },
   { icon: '🔔', label: 'Notifications', color: '#3b82f6', bg: '#172554', badge: 3 },
@@ -98,10 +100,17 @@ export default function Profile() {
   const totalDays = 7;
 
   const handleMenuPress = (label: string) => {
+    if (label === 'My Workouts') router.push('/myWorkouts');
     if (label === 'Settings') router.replace('/settings');
     if (label === 'Achievements') router.replace('/achievements');
     if (label === 'Notifications') router.replace('/(tabs)/notifications');
     if (label === 'Log Out') setShowLogoutModal(true);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowLogoutModal(false);
+    router.replace('/(auth)');
   };
 
   return (
@@ -343,10 +352,7 @@ export default function Profile() {
               <TouchableOpacity
                 style={styles.confirmDangerBtn}
                 activeOpacity={0.7}
-                onPress={() => {
-                  setShowLogoutModal(false);
-                  router.replace('/(auth)');
-                }}
+                onPress={handleLogout}
               >
                 <Text style={styles.confirmDangerBtnText}>Log Out</Text>
               </TouchableOpacity>
@@ -547,7 +553,6 @@ const styles = StyleSheet.create({
   achDesc: { color: '#6b7280', fontSize: 12, marginTop: 2 },
   achTime: { color: '#4b5563', fontSize: 12 },
 
-  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',

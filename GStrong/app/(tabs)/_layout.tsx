@@ -76,7 +76,7 @@ const CenterCreateButton = () => {
             <TouchableOpacity 
                 style={styles.createButton}
                 onPress={() => {
-                    console.log('Create button pressed')
+                    router.replace('/(tabs)/create')
                 }}
             >
                 <Ionicons name="add" size={28} color="white" />
@@ -266,6 +266,13 @@ const TabsLayout = () => {
         />
         <Tabs.Screen
         name="notifications"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
+        <Tabs.Screen
+        name="myWorkouts"
         options={{
             href: null,
             headerShown: false,

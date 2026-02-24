@@ -1,14 +1,34 @@
 import { useState } from "react";
 import { useRouter } from 'expo-router';
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native'
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, FontAwesome } from "@expo/vector-icons"
 import React from 'react'
+import { supabase } from '../../lib/supabase'
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      Alert.alert('Login Failed', error.message);
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   return (
     <LinearGradient
       colors={["#16295eff", "#04091aff"]}
@@ -17,7 +37,6 @@ export default function Login() {
       <SafeAreaView style={styles.inner}>
 
         <View style={styles.logoContainer}>
-
           <View style={styles.logoWrapper}>
             <Image 
             source={require('../../assets/images/logo.png')} 
@@ -36,6 +55,10 @@ export default function Login() {
             style={styles.input}
             placeholder="you@example.com"
             placeholderTextColor="#6B7280"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
           />
         </View>
 
@@ -46,10 +69,10 @@ export default function Login() {
             placeholder="••••••••"
             placeholderTextColor="#6B7280"
             secureTextEntry={!passwordVisible}
+            value={password}
+            onChangeText={setPassword}
           />
-          <TouchableOpacity
-            onPress={() => setPasswordVisible(!passwordVisible)}
-          >
+          <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
             <Ionicons
               name={passwordVisible ? "eye-off-outline" : "eye-outline"}
               size={24}
@@ -62,9 +85,19 @@ export default function Login() {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signInButton} onPress={() => router.replace('/(tabs)')}>
-          <Text style={styles.signInText}>Sign In</Text>
-          <Ionicons name="arrow-forward-outline" size={24} color="white" />
+        <TouchableOpacity
+          style={[styles.signInButton, loading && { opacity: 0.7 }]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <Text style={styles.signInText}>Sign In</Text>
+              <Ionicons name="arrow-forward-outline" size={24} color="white" />
+            </>
+          )}
         </TouchableOpacity>
 
         <View style={styles.orContainer}>

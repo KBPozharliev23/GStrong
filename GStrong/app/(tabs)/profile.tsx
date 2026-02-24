@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -94,7 +94,31 @@ const menuItems = [
 export default function Profile() {
   const [activeTab, setActiveTab] = useState<'profile' | 'progress'>('profile');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [displayName, setDisplayName] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Try profiles table first
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.full_name) {
+        setDisplayName(profile.full_name);
+      } else if (user.user_metadata?.full_name) {
+        setDisplayName(user.user_metadata.full_name);
+      } else if (user.email) {
+        setDisplayName(user.email.split('@')[0]);
+      }
+    };
+    loadUser();
+  }, []);
 
   const streakDays = 12;
   const totalDays = 7;
@@ -153,7 +177,7 @@ export default function Profile() {
                     />
                   </View>
                   <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>George Strong</Text>
+                    <Text style={styles.profileName}>{displayName || 'User'}</Text>
                   </View>
                   <TouchableOpacity>
                     <Text style={styles.editText}>Edit</Text>

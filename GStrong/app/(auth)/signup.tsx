@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useRouter } from 'expo-router';
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
+import { supabase } from '../../lib/supabase';
 
 export default function Signup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -37,13 +39,63 @@ export default function Signup() {
     return false;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (currentStep === 1) {
+      if (formData.password !== formData.confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+      }
+      if (formData.password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters');
+        return;
+      }
+    }
+
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
-    } else {
-      console.log('Signup complete!', formData);
-      router.replace('/(tabs)');
+      return;
     }
+
+    // Final step — create account in Supabase
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          full_name: formData.fullName,
+          goal: formData.goal,
+          experience_level: formData.experienceLevel,
+          workout_frequency: formData.workoutFrequency,
+          preferred_time: formData.preferredTime,
+        },
+      },
+    });
+
+    if (error) {
+      setLoading(false);
+      Alert.alert('Signup Failed', error.message);
+      return;
+    }
+
+    // Also insert into profiles table for reliable storage
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        full_name: formData.fullName,
+        goal: formData.goal,
+        experience_level: formData.experienceLevel,
+        workout_frequency: formData.workoutFrequency,
+        preferred_time: formData.preferredTime,
+      });
+    }
+
+    setLoading(false);
+    Alert.alert(
+      'Account Created! 🎉',
+      'Check your email to confirm your account, then sign in.',
+      [{ text: 'Go to Login', onPress: () => router.replace('/(auth)') }]
+    );
   };
 
   const handleBack = () => {
@@ -346,14 +398,20 @@ export default function Signup() {
         </ScrollView>
 
         <TouchableOpacity 
-          style={[styles.continueButton, !canContinue() && styles.continueButtonDisabled]}
+          style={[styles.continueButton, (!canContinue() || loading) && styles.continueButtonDisabled]}
           onPress={handleContinue}
-          disabled={!canContinue()}
+          disabled={!canContinue() || loading}
         >
-          <Text style={styles.continueText}>
-            {currentStep === 4 ? 'Complete Setup' : 'Continue'}
-          </Text>
-          <Ionicons name="arrow-forward-outline" size={22} color="white" />
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <Text style={styles.continueText}>
+                {currentStep === 4 ? 'Complete Setup' : 'Continue'}
+              </Text>
+              <Ionicons name="arrow-forward-outline" size={22} color="white" />
+            </>
+          )}
         </TouchableOpacity>
 
       </SafeAreaView>

@@ -37,7 +37,7 @@ const EXERCISES: Exercise[] = [
     sets: '3-4 sets',
     reps: '8-12 reps',
     muscles: ['Pectoralis Major', 'Triceps', 'Anterior Deltoids'],
-    image: { uri: '' },
+    image:  require('../../assets/images/exercises/chest.png'),
     instructions: [
       'Lie flat on the bench with feet firmly on the ground',
       'Grip the barbell slightly wider than shoulder-width',
@@ -53,7 +53,7 @@ const EXERCISES: Exercise[] = [
     sets: '3-4 sets',
     reps: '15-20 reps',
     muscles: ['Pectoralis Major', 'Triceps', 'Core'],
-    image: { uri: '' },
+    image:  require('../../assets/images/chest/push_ups.png'),
     instructions: [
       'Start in a high plank position with hands slightly wider than shoulders',
       'Keep your body in a straight line from head to heels',
@@ -69,7 +69,7 @@ const EXERCISES: Exercise[] = [
     sets: '3 sets',
     reps: '10-15 reps',
     muscles: ['Pectoralis Major', 'Anterior Deltoids'],
-    image: { uri: '' },
+    image:  require('../../assets/images/chest/dumbbel_flyes.png'),
     instructions: [
       'Lie on a flat bench holding dumbbells above your chest',
       'Keep a slight bend in the elbows throughout',
@@ -85,7 +85,7 @@ const EXERCISES: Exercise[] = [
     sets: '3 sets',
     reps: '8-12 reps',
     muscles: ['Pectoralis Major', 'Triceps', 'Anterior Deltoids'],
-    image: { uri: '' },
+    image:  require('../../assets/images/chest/chest_dips.png'),
     instructions: [
       'Grip parallel bars and lift yourself up to the starting position',
       'Lean your torso slightly forward to target the chest',
@@ -101,7 +101,7 @@ const EXERCISES: Exercise[] = [
     sets: '4 sets',
     reps: '6-10 reps',
     muscles: ['Upper Pectoralis', 'Anterior Deltoids', 'Triceps'],
-    image: { uri: '' },
+    image:  require('../../assets/images/chest/incline_press.png'),
     instructions: [
       'Set the bench to a 30-45 degree incline',
       'Unrack the bar and hold it above your upper chest',
@@ -117,7 +117,7 @@ const EXERCISES: Exercise[] = [
     sets: '3 sets',
     reps: '12-15 reps',
     muscles: ['Pectoralis Major', 'Anterior Deltoids'],
-    image: { uri: '' },
+    image:  require('../../assets/images/chest/cable_crossover.png'),
     instructions: [
       'Stand in the center of a cable machine with handles at the highest setting',
       'Step forward and lean slightly from the waist',

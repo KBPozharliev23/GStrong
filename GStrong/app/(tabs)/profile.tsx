@@ -145,6 +145,7 @@ export default function Profile() {
     if (label === 'Settings') router.replace('/settings');
     if (label === 'Achievements') router.replace('/achievements');
     if (label === 'Notifications') router.replace('/(tabs)/notifications');
+    if (label === 'Help & Support') router.push('/helpSupport');
     if (label === 'Log Out') setShowLogoutModal(true);
   };
 

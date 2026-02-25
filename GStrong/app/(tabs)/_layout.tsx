@@ -278,6 +278,13 @@ const TabsLayout = () => {
             headerShown: false,
         }}
         />
+        <Tabs.Screen
+        name="helpSupport"
+        options={{
+            href: null,
+            headerShown: false,
+        }}
+        />
 
       </Tabs>
       

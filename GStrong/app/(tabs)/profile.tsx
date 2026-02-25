@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
+import { getUserStats, xpForNextLevel, xpProgressInLevel } from '../../lib/stats';
 
 const { width } = Dimensions.get('window');
-
 const CHART_WIDTH = width - 28 - 32;
+const XP_PER_LEVEL = 600;
 
 const weeklyData = {
   labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -95,33 +97,48 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<'profile' | 'progress'>('profile');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [stats, setStats] = useState({ points: 0, xp: 0, level: 1, workouts_completed: 0 });
   const router = useRouter();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  // ✅ Reloads every time you navigate to this screen
+  useFocusEffect(
+    useCallback(() => {
+      const loadUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      // Try profiles table first
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
 
-      if (profile?.full_name) {
-        setDisplayName(profile.full_name);
-      } else if (user.user_metadata?.full_name) {
-        setDisplayName(user.user_metadata.full_name);
-      } else if (user.email) {
-        setDisplayName(user.email.split('@')[0]);
-      }
-    };
-    loadUser();
-  }, []);
+        if (profile?.full_name) {
+          setDisplayName(profile.full_name);
+        } else if (user.user_metadata?.full_name) {
+          setDisplayName(user.user_metadata.full_name);
+        } else if (user.email) {
+          setDisplayName(user.email.split('@')[0]);
+        }
 
-  const streakDays = 12;
-  const totalDays = 7;
+        const userStats = await getUserStats(user.id);
+        if (userStats) {
+          setStats({
+            points: userStats.points,
+            xp: userStats.xp,
+            level: userStats.level,
+            workouts_completed: userStats.workouts_completed,
+          });
+        }
+      };
+
+      loadUser();
+    }, [])
+  );
+
+  const xpInCurrentLevel = xpProgressInLevel(stats.xp);
+  const xpNeeded = xpForNextLevel(stats.xp);
+  const xpBarPercent = (xpInCurrentLevel / XP_PER_LEVEL) * 100;
 
   const handleMenuPress = (label: string) => {
     if (label === 'My Workouts') router.push('/myWorkouts');
@@ -186,38 +203,40 @@ export default function Profile() {
 
                 <View style={styles.divider} />
 
+                {/* ✅ All three stats are now live from Supabase */}
                 <View style={styles.statsRow}>
                   <View style={styles.statItem}>
-                    <Text style={styles.statValue}>450</Text>
+                    <Text style={styles.statValue}>{stats.points}</Text>
                     <Text style={styles.statLabel}>Points</Text>
                   </View>
                   <View style={styles.statDivider} />
                   <View style={styles.statItem}>
-                    <Text style={styles.statValue}>12</Text>
-                    <Text style={styles.statLabel}>Achievements</Text>
+                    <Text style={styles.statValue}>{stats.xp}</Text>
+                    <Text style={styles.statLabel}>Total XP</Text>
                   </View>
                   <View style={styles.statDivider} />
                   <View style={styles.statItem}>
-                    <Text style={styles.statValue}>45</Text>
+                    <Text style={styles.statValue}>{stats.workouts_completed}</Text>
                     <Text style={styles.statLabel}>Workouts</Text>
                   </View>
                 </View>
               </View>
             </View>
 
+            {/* ✅ Real XP / Level from Supabase */}
             <View style={styles.section}>
               <View style={styles.levelCard}>
                 <View style={styles.levelRow}>
                   <View style={styles.levelLeft}>
                     <Text style={styles.levelCrown}>👑</Text>
-                    <Text style={styles.levelText}>Level 8</Text>
+                    <Text style={styles.levelText}>Level {stats.level}</Text>
                   </View>
-                  <Text style={styles.xpText}>450/600 XP</Text>
+                  <Text style={styles.xpText}>{xpInCurrentLevel}/{XP_PER_LEVEL} XP</Text>
                 </View>
                 <View style={styles.xpBarBg}>
-                  <View style={[styles.xpBarFill, { width: `${(450 / 600) * 100}%` }]} />
+                  <View style={[styles.xpBarFill, { width: `${xpBarPercent}%` }]} />
                 </View>
-                <Text style={styles.xpSubtext}>150 XP to Level 9</Text>
+                <Text style={styles.xpSubtext}>{xpNeeded} XP to Level {stats.level + 1}</Text>
               </View>
             </View>
 
@@ -264,7 +283,7 @@ export default function Profile() {
                   </View>
                 </View>
                 <View style={styles.streakDots}>
-                  {Array.from({ length: totalDays }).map((_, i) => (
+                  {Array.from({ length: 7 }).map((_, i) => (
                     <View
                       key={i}
                       style={[
@@ -279,15 +298,16 @@ export default function Profile() {
 
             <View style={styles.section}>
               <View style={styles.twoColRow}>
+                {/* ✅ Real total points */}
                 <View style={styles.metricCard}>
                   <Text style={styles.metricIcon}>🏆</Text>
-                  <Text style={styles.metricValue}>450</Text>
+                  <Text style={styles.metricValue}>{stats.points}</Text>
                   <Text style={styles.metricLabel}>Total Points</Text>
                 </View>
                 <View style={[styles.metricCard, { borderColor: '#1e3a6e' }]}>
-                  <Text style={styles.metricIcon}>🎯</Text>
-                  <Text style={styles.metricValue}>15/20</Text>
-                  <Text style={styles.metricLabel}>Weekly Goal</Text>
+                  <Text style={styles.metricIcon}>⚡</Text>
+                  <Text style={styles.metricValue}>{stats.xp}</Text>
+                  <Text style={styles.metricLabel}>Total XP</Text>
                 </View>
               </View>
             </View>
@@ -358,7 +378,6 @@ export default function Profile() {
         )}
       </ScrollView>
 
-      {/* Log Out Confirmation Modal */}
       <Modal transparent visible={showLogoutModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmCard}>
@@ -390,11 +409,9 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
-
   header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10, marginTop: 10 },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white' },
   subtitle: { color: '#6b7280', marginTop: 4, fontSize: 13 },
-
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: 14,
@@ -409,10 +426,8 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: '#172554' },
   tabText: { color: '#6b7280', fontWeight: '600', fontSize: 14 },
   tabTextActive: { color: 'white' },
-
   section: { paddingHorizontal: 14, marginBottom: 14 },
   sectionTitle: { color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-
   profileCard: {
     backgroundColor: '#0c1120',
     borderRadius: 20,
@@ -429,47 +444,16 @@ const styles = StyleSheet.create({
     borderColor: '#2563eb',
     overflow: 'hidden',
   },
-  avatarImage: {
-    width: 130,
-    height: 130,
-    top: -8,
-    left: -33,
-  },
-  avatarPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#1a2540',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#2563eb',
-  },
-  avatarEmoji: { fontSize: 30 },
-  crownBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#d97706',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  avatarImage: { width: 130, height: 130, top: -8, left: -33 },
   profileInfo: { flex: 1 },
   profileName: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  profileMember: { color: '#6b7280', fontSize: 12, marginTop: 2 },
   editText: { color: '#3b82f6', fontSize: 14, fontWeight: '600' },
-
   divider: { height: 1, backgroundColor: '#1a2540', marginVertical: 16 },
-
   statsRow: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center' },
   statValue: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   statLabel: { color: '#6b7280', fontSize: 11, marginTop: 2 },
   statDivider: { width: 1, backgroundColor: '#1a2540' },
-
   levelCard: {
     backgroundColor: '#100a00',
     borderRadius: 16,
@@ -485,7 +469,6 @@ const styles = StyleSheet.create({
   xpBarBg: { height: 8, backgroundColor: '#1a1a0a', borderRadius: 999, overflow: 'hidden', marginBottom: 8 },
   xpBarFill: { height: '100%', backgroundColor: '#eab308', borderRadius: 999 },
   xpSubtext: { color: '#6b7280', fontSize: 12 },
-
   menuList: { gap: 8 },
   menuItem: {
     flexDirection: 'row',
@@ -510,9 +493,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
   chevron: { color: '#6b7280', fontSize: 22, lineHeight: 22 },
-
   versionText: { color: '#374151', fontSize: 12, textAlign: 'center', marginTop: 8 },
-
   streakCard: {
     backgroundColor: '#0c1120',
     borderRadius: 20,
@@ -536,7 +517,6 @@ const styles = StyleSheet.create({
   streakDot: { flex: 1, height: 36, borderRadius: 10 },
   streakDotActive: { backgroundColor: '#ea580c' },
   streakDotInactive: { backgroundColor: '#1a2540' },
-
   twoColRow: { flexDirection: 'row', gap: 10 },
   metricCard: {
     flex: 1,
@@ -550,7 +530,6 @@ const styles = StyleSheet.create({
   metricIcon: { fontSize: 22, marginBottom: 6 },
   metricValue: { color: 'white', fontWeight: 'bold', fontSize: 22 },
   metricLabel: { color: '#6b7280', fontSize: 11, marginTop: 3 },
-
   chartCard: {
     backgroundColor: '#0c1120',
     borderRadius: 16,
@@ -561,7 +540,6 @@ const styles = StyleSheet.create({
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   chartTitle: { color: 'white', fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   trendIcon: { color: '#22c55e', fontSize: 18, fontWeight: 'bold' },
-
   achievementsList: { gap: 8 },
   achievementRow: {
     flexDirection: 'row',
@@ -576,7 +554,6 @@ const styles = StyleSheet.create({
   achTitle: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   achDesc: { color: '#6b7280', fontSize: 12, marginTop: 2 },
   achTime: { color: '#4b5563', fontSize: 12 },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -601,11 +578,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginBottom: 24,
   },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
+  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%' },
   cancelBtn: {
     flex: 1,
     backgroundColor: '#131d33',

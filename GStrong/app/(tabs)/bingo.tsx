@@ -10,6 +10,8 @@ import {
   Dimensions,
   Share,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
+import { addPoints, incrementBingoSquares, POINTS } from '../../lib/stats';
 
 const { width } = Dimensions.get('window');
 
@@ -117,18 +119,27 @@ export default function WeeklyBingo() {
     ]).start(() => onDone && onDone());
   };
 
-  const checkLines = (completed: Set<number>, currentLines: Set<number>) => {
+  const checkLines = async (completed: Set<number>, currentLines: Set<number>, userId: string) => {
     const newCompletedLines = new Set(currentLines);
-    let found = false;
+    let newLinesFound = 0;
     LINES.forEach((line, idx) => {
       if (!currentLines.has(idx) && line.every(i => completed.has(i))) {
         newCompletedLines.add(idx);
-        found = true;
+        newLinesFound++;
       }
     });
-    if (found) {
+    if (newLinesFound > 0) {
       setCompletedLines(newCompletedLines);
+      // Award points for each new line
+      await addPoints(userId, POINTS.BINGO_LINE * newLinesFound);
+      setTotalPoints(p => p + POINTS.BINGO_LINE * newLinesFound);
       triggerLinePopup();
+
+      // Check for full card
+      if (completed.size >= 25) {
+        await addPoints(userId, POINTS.BINGO_FULL_CARD);
+        setTotalPoints(p => p + POINTS.BINGO_FULL_CARD);
+      }
     }
     return newCompletedLines;
   };
@@ -141,21 +152,28 @@ export default function WeeklyBingo() {
     }, 1500);
   };
 
-  const toggleTask = (index: number) => {
+  const toggleTask = async (index: number) => {
     const task = flatTasks[index];
     if (task.label === 'FREE') return;
+
+    // Get user id
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const newCompleted = new Set(completedTasks);
-    let delta = 0;
     if (newCompleted.has(index)) {
+      // Uncompleting — deduct points locally only (no negative Supabase writes)
       newCompleted.delete(index);
-      delta = -task.points;
+      setTotalPoints(p => p - task.points);
     } else {
+      // Completing — award points in Supabase
       newCompleted.add(index);
-      delta = task.points;
+      setTotalPoints(p => p + task.points);
+      await addPoints(user.id, POINTS.BINGO_SQUARE);
+      await incrementBingoSquares(user.id);
     }
     setCompletedTasks(newCompleted);
-    setTotalPoints(p => p + delta);
-    checkLines(newCompleted, completedLines);
+    await checkLines(newCompleted, completedLines, user.id);
   };
 
   const handleReset = () => {
@@ -341,20 +359,18 @@ export default function WeeklyBingo() {
         </View>
       </ScrollView>
 
-      {/* Line Complete Popup */}
       {showLinePopup && (
         <Modal transparent animationType="none">
           <View style={styles.popupOverlay}>
             <Animated.View style={[styles.linePopupCard, { transform: [{ scale: linePopupScale }], opacity: linePopupOpacity }]}>
               <Text style={styles.popupIcon}>🏆</Text>
               <Text style={styles.popupTitle}>Line Complete!</Text>
-              <Text style={styles.linePopupSubtitle}>+100 Bonus Points</Text>
+              <Text style={styles.linePopupSubtitle}>+{POINTS.BINGO_LINE} Bonus Points</Text>
             </Animated.View>
           </View>
         </Modal>
       )}
 
-      {/* Reset Confirm Popup */}
       {showResetPopup && (
         <Modal transparent animationType="none">
           <View style={styles.popupOverlay}>
@@ -375,7 +391,6 @@ export default function WeeklyBingo() {
         </Modal>
       )}
 
-      {/* Reset Success Popup */}
       {showResetSuccessPopup && (
         <Modal transparent animationType="none">
           <View style={styles.popupOverlay}>
@@ -388,7 +403,6 @@ export default function WeeklyBingo() {
         </Modal>
       )}
 
-      {/* Share Modal */}
       {showShareModal && (
         <Modal transparent animationType="none" onRequestClose={closeShareModal}>
           <TouchableOpacity style={styles.shareBackdrop} activeOpacity={1} onPress={closeShareModal}>
@@ -430,7 +444,6 @@ export default function WeeklyBingo() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
-
   header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 10 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white' },
@@ -447,10 +460,8 @@ const styles = StyleSheet.create({
     borderColor: '#1f2a3c',
   },
   iconBtnText: { color: '#9ca3af', fontSize: 16 },
-
   section: { paddingHorizontal: 14, marginBottom: 14 },
   sectionTitle: { color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-
   timerCard: {
     backgroundColor: '#0c1120',
     borderRadius: 16,
@@ -467,7 +478,6 @@ const styles = StyleSheet.create({
   timerLabel: { color: '#6b7280', fontSize: 10, letterSpacing: 0.3 },
   timerValue: { color: 'white', fontWeight: '700', fontSize: 15, marginTop: 2 },
   timerRight: { alignItems: 'flex-end' },
-
   statsRow: { flexDirection: 'row', gap: 8 },
   statBox: {
     flex: 1,
@@ -482,10 +492,8 @@ const styles = StyleSheet.create({
   statBoxGreen: { borderColor: '#14532d' },
   statValue: { color: 'white', fontWeight: 'bold', fontSize: 18 },
   statLabel: { color: '#6b7280', fontSize: 10, marginTop: 2, letterSpacing: 0.2 },
-
   progressBarBg: { height: 5, backgroundColor: '#1a2540', borderRadius: 999, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#2563eb', borderRadius: 999 },
-
   categoryRow: { flexDirection: 'row', gap: 7, paddingVertical: 4 },
   categoryBtn: {
     paddingHorizontal: 14,
@@ -498,7 +506,6 @@ const styles = StyleSheet.create({
   categoryBtnActive: { backgroundColor: '#172554', borderColor: '#2563eb' },
   categoryText: { color: '#6b7280', fontSize: 13, fontWeight: '600' },
   categoryTextActive: { color: 'white' },
-
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, justifyContent: 'space-between' },
   gridItem: {
     width: CELL_SIZE,
@@ -519,7 +526,6 @@ const styles = StyleSheet.create({
   gridText: { color: '#e2e8f0', fontSize: 9.5, fontWeight: '600', textAlign: 'center', lineHeight: 13 },
   gridTextDimmed: { color: '#374151' },
   checkmark: { position: 'absolute', top: 5, right: 6, color: '#60a5fa', fontSize: 10, fontWeight: 'bold' },
-
   achievementsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   achievementCard: {
     width: '47%',
@@ -534,7 +540,6 @@ const styles = StyleSheet.create({
   achievementIcon: { fontSize: 26, marginBottom: 8 },
   achievementTitle: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   achievementDesc: { color: '#6b7280', fontSize: 11, marginTop: 2 },
-
   popupOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -543,7 +548,6 @@ const styles = StyleSheet.create({
   },
   popupIcon: { fontSize: 48, marginBottom: 10 },
   popupTitle: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-
   linePopupCard: {
     backgroundColor: '#130e02',
     borderColor: '#d97706',
@@ -558,7 +562,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   linePopupSubtitle: { color: '#fbbf24', fontSize: 15, marginTop: 5, fontWeight: '600' },
-
   resetConfirmCard: {
     backgroundColor: '#1a0a0a',
     borderColor: '#ef4444',
@@ -574,11 +577,7 @@ const styles = StyleSheet.create({
     maxWidth: 350,
   },
   resetConfirmSubtitle: { color: '#f87171', fontSize: 13, marginTop: 5, fontWeight: '500' },
-  resetBtnRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
-  },
+  resetBtnRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
   resetCancelBtn: {
     flex: 1,
     backgroundColor: '#1a2540',
@@ -599,7 +598,6 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
   },
   resetConfirmText: { color: '#ef4444', fontSize: 15, fontWeight: '700' },
-
   resetSuccessCard: {
     backgroundColor: '#020f1f',
     borderColor: '#2563eb',
@@ -614,7 +612,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   resetSuccessSubtitle: { color: '#60a5fa', fontSize: 15, marginTop: 5, fontWeight: '600' },
-
   shareBackdrop: { ...StyleSheet.absoluteFillObject },
   shareSheet: {
     position: 'absolute',

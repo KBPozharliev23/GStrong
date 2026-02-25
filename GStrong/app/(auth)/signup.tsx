@@ -88,6 +88,8 @@ export default function Signup() {
         workout_frequency: formData.workoutFrequency,
         preferred_time: formData.preferredTime,
       });
+
+      await supabase.from('user_stats').insert({ id: data.user.id });
     }
 
     setLoading(false);

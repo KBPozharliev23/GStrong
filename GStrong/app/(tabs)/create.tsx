@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { addPoints, incrementWorkoutsCompleted, POINTS } from '../../lib/stats';
 import {
   View,
   Text,
@@ -18,7 +19,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface ExerciseEntry {
   id: string;
   name: string;
@@ -36,7 +36,6 @@ interface MuscleOption {
   exercises: string[];
 }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
 const MUSCLE_GROUPS: MuscleOption[] = [
   {
     id: 'chest',
@@ -89,7 +88,6 @@ const WORKOUT_TYPES = [
   { id: 'circuit', label: 'Circuit', icon: 'refresh-outline' },
 ];
 
-// ── Exercise Picker Modal ─────────────────────────────────────────────────────
 function ExercisePickerModal({
   visible,
   onClose,
@@ -131,16 +129,13 @@ function ExercisePickerModal({
       <View style={modal.backdrop}>
         <View style={modal.sheet}>
           <View style={modal.handle} />
-
           <View style={modal.sheetHeader}>
             <Text style={modal.sheetTitle}>Add Exercise</Text>
             <TouchableOpacity onPress={() => { reset(); onClose(); }}>
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
           </View>
-
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Step 1 — Pick muscle group */}
             <Text style={modal.stepLabel}>Muscle Group</Text>
             <View style={modal.groupGrid}>
               {MUSCLE_GROUPS.map(g => (
@@ -154,8 +149,6 @@ function ExercisePickerModal({
                 </TouchableOpacity>
               ))}
             </View>
-
-            {/* Step 2 — Pick exercise */}
             {selectedGroup && (
               <>
                 <Text style={modal.stepLabel}>Exercise</Text>
@@ -173,31 +166,17 @@ function ExercisePickerModal({
                 ))}
               </>
             )}
-
-            {/* Step 3 — Sets / Reps / Weight */}
             {selectedExercise !== '' && (
               <>
                 <Text style={modal.stepLabel}>Details</Text>
                 <View style={modal.detailsRow}>
                   <View style={modal.detailBox}>
                     <Text style={modal.detailLabel}>Sets</Text>
-                    <TextInput
-                      style={modal.detailInput}
-                      value={sets}
-                      onChangeText={setSets}
-                      keyboardType="numeric"
-                      selectTextOnFocus
-                    />
+                    <TextInput style={modal.detailInput} value={sets} onChangeText={setSets} keyboardType="numeric" selectTextOnFocus />
                   </View>
                   <View style={modal.detailBox}>
                     <Text style={modal.detailLabel}>Reps</Text>
-                    <TextInput
-                      style={modal.detailInput}
-                      value={reps}
-                      onChangeText={setReps}
-                      keyboardType="numeric"
-                      selectTextOnFocus
-                    />
+                    <TextInput style={modal.detailInput} value={reps} onChangeText={setReps} keyboardType="numeric" selectTextOnFocus />
                   </View>
                   <View style={modal.detailBox}>
                     <Text style={modal.detailLabel}>kg</Text>
@@ -212,14 +191,12 @@ function ExercisePickerModal({
                     />
                   </View>
                 </View>
-
                 <TouchableOpacity style={modal.addBtn} onPress={handleAdd}>
                   <Ionicons name="add-circle-outline" size={20} color="white" />
                   <Text style={modal.addBtnText}>Add to Workout</Text>
                 </TouchableOpacity>
               </>
             )}
-
             <View style={{ height: 40 }} />
           </ScrollView>
         </View>
@@ -228,12 +205,12 @@ function ExercisePickerModal({
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function CreateWorkout() {
   const [workoutName, setWorkoutName] = useState('');
   const [workoutType, setWorkoutType] = useState('strength');
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const addExercise = (ex: Omit<ExerciseEntry, 'id'>) => {
     setExercises(prev => [...prev, { ...ex, id: Date.now().toString() }]);
@@ -245,8 +222,6 @@ export default function CreateWorkout() {
       { text: 'Remove', style: 'destructive', onPress: () => setExercises(prev => prev.filter(e => e.id !== id)) },
     ]);
   };
-
-  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!workoutName.trim()) {
@@ -272,15 +247,23 @@ export default function CreateWorkout() {
       type: workoutType,
       exercises: exercises,
     });
-    setSaving(false);
 
     if (error) {
+      setSaving(false);
       Alert.alert('Error', error.message);
-    } else {
-      Alert.alert('Workout Saved! 💪', `"${workoutName}" has been saved.`, [
-        { text: 'Great!', onPress: () => { setWorkoutName(''); setExercises([]); setWorkoutType('strength'); } },
-      ]);
+      return;
     }
+
+    // ✅ Award points and increment workout count
+    await addPoints(user.id, POINTS.SAVE_WORKOUT);
+    await incrementWorkoutsCompleted(user.id);
+
+    setSaving(false);
+    Alert.alert(
+      'Workout Saved! 💪',
+      `"${workoutName}" has been saved.\n+${POINTS.SAVE_WORKOUT} points earned!`,
+      [{ text: 'Great!', onPress: () => { setWorkoutName(''); setExercises([]); setWorkoutType('strength'); } }],
+    );
   };
 
   const totalSets = exercises.reduce((acc, e) => acc + (parseInt(e.sets) || 0), 0);
@@ -289,17 +272,11 @@ export default function CreateWorkout() {
     <View style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-
-          {/* Header */}
-          <LinearGradient
-            colors={['#0d1a35', '#060a14']}
-            style={styles.header}
-          >
+          <LinearGradient colors={['#0d1a35', '#060a14']} style={styles.header}>
             <Text style={styles.headerTitle}>Create Workout</Text>
             <Text style={styles.headerSubtitle}>Build your perfect session</Text>
           </LinearGradient>
 
-          {/* Workout name */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Workout Name</Text>
             <View style={styles.nameInput}>
@@ -314,7 +291,6 @@ export default function CreateWorkout() {
             </View>
           </View>
 
-          {/* Workout type */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Workout Type</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
@@ -324,20 +300,13 @@ export default function CreateWorkout() {
                   style={[styles.typeChip, workoutType === t.id && styles.typeChipActive]}
                   onPress={() => setWorkoutType(t.id)}
                 >
-                  <Ionicons
-                    name={t.icon as any}
-                    size={16}
-                    color={workoutType === t.id ? 'white' : '#6b7280'}
-                  />
-                  <Text style={[styles.typeChipText, workoutType === t.id && { color: 'white' }]}>
-                    {t.label}
-                  </Text>
+                  <Ionicons name={t.icon as any} size={16} color={workoutType === t.id ? 'white' : '#6b7280'} />
+                  <Text style={[styles.typeChipText, workoutType === t.id && { color: 'white' }]}>{t.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
 
-          {/* Stats bar */}
           {exercises.length > 0 && (
             <View style={styles.statsBar}>
               <View style={styles.statItem}>
@@ -357,10 +326,8 @@ export default function CreateWorkout() {
             </View>
           )}
 
-          {/* Exercise list */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Exercises</Text>
-
             {exercises.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>🏋️</Text>
@@ -378,17 +345,9 @@ export default function CreateWorkout() {
                     <View style={styles.exerciseInfo}>
                       <Text style={styles.exerciseName}>{ex.name}</Text>
                       <View style={styles.exerciseMeta}>
-                        <View style={styles.exerciseMetaChip}>
-                          <Text style={styles.exerciseMetaText}>{ex.sets} sets</Text>
-                        </View>
-                        <View style={styles.exerciseMetaChip}>
-                          <Text style={styles.exerciseMetaText}>{ex.reps} reps</Text>
-                        </View>
-                        {ex.weight ? (
-                          <View style={styles.exerciseMetaChip}>
-                            <Text style={styles.exerciseMetaText}>{ex.weight} kg</Text>
-                          </View>
-                        ) : null}
+                        <View style={styles.exerciseMetaChip}><Text style={styles.exerciseMetaText}>{ex.sets} sets</Text></View>
+                        <View style={styles.exerciseMetaChip}><Text style={styles.exerciseMetaText}>{ex.reps} reps</Text></View>
+                        {ex.weight ? <View style={styles.exerciseMetaChip}><Text style={styles.exerciseMetaText}>{ex.weight} kg</Text></View> : null}
                       </View>
                     </View>
                     <TouchableOpacity onPress={() => removeExercise(ex.id)} style={styles.removeBtn}>
@@ -398,17 +357,13 @@ export default function CreateWorkout() {
                 );
               })
             )}
-
-            {/* Add exercise button */}
             <TouchableOpacity style={styles.addExerciseBtn} onPress={() => setPickerVisible(true)}>
               <Ionicons name="add-circle-outline" size={20} color="#3b82f6" />
               <Text style={styles.addExerciseBtnText}>Add Exercise</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
 
-        {/* Save button — fixed at bottom */}
         {exercises.length > 0 && (
           <View style={styles.saveContainer}>
             <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
@@ -417,7 +372,7 @@ export default function CreateWorkout() {
               ) : (
                 <>
                   <Ionicons name="checkmark-circle-outline" size={22} color="white" />
-                  <Text style={styles.saveBtnText}>Save Workout</Text>
+                  <Text style={styles.saveBtnText}>Save Workout  (+{POINTS.SAVE_WORKOUT} pts)</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -434,10 +389,8 @@ export default function CreateWorkout() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
-
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -447,7 +400,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: 'white', fontSize: 28, fontWeight: 'bold' },
   headerSubtitle: { color: '#6b7280', fontSize: 13, marginTop: 4 },
-
   section: { paddingHorizontal: 16, marginTop: 24 },
   sectionLabel: {
     color: '#6b7280',
@@ -457,7 +409,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 12,
   },
-
   nameInput: {
     backgroundColor: '#0c1120',
     borderRadius: 14,
@@ -469,7 +420,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   nameInputText: { flex: 1, color: 'white', fontSize: 15 },
-
   typeChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,12 +431,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1a2540',
   },
-  typeChipActive: {
-    backgroundColor: '#1d4ed8',
-    borderColor: '#3b82f6',
-  },
+  typeChipActive: { backgroundColor: '#1d4ed8', borderColor: '#3b82f6' },
   typeChipText: { color: '#6b7280', fontSize: 13, fontWeight: '600' },
-
   statsBar: {
     flexDirection: 'row',
     backgroundColor: '#0c1120',
@@ -503,7 +449,6 @@ const styles = StyleSheet.create({
   statValue: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   statLabel: { color: '#6b7280', fontSize: 11, marginTop: 2 },
   statDivider: { width: 1, height: 36, backgroundColor: '#1a2540' },
-
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
@@ -516,7 +461,6 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 40, marginBottom: 12 },
   emptyTitle: { color: 'white', fontSize: 16, fontWeight: '700', marginBottom: 6 },
   emptySubtitle: { color: '#6b7280', fontSize: 13, textAlign: 'center', paddingHorizontal: 32 },
-
   exerciseCard: {
     backgroundColor: '#0c1120',
     borderRadius: 16,
@@ -550,7 +494,6 @@ const styles = StyleSheet.create({
   },
   exerciseMetaText: { color: '#94a3b8', fontSize: 11, fontWeight: '500' },
   removeBtn: { padding: 6 },
-
   addExerciseBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -565,7 +508,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(37,99,235,0.06)',
   },
   addExerciseBtnText: { color: '#3b82f6', fontSize: 15, fontWeight: '600' },
-
   saveContainer: {
     position: 'absolute',
     bottom: 0,
@@ -595,11 +537,7 @@ const styles = StyleSheet.create({
 });
 
 const modal = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#0e1729',
     borderTopLeftRadius: 28,
@@ -610,22 +548,9 @@ const modal = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#1a2540',
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#2d3f5c',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  handle: { width: 40, height: 4, backgroundColor: '#2d3f5c', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   sheetTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-
   stepLabel: {
     color: '#6b7280',
     fontSize: 11,
@@ -635,13 +560,7 @@ const modal = StyleSheet.create({
     marginBottom: 12,
     marginTop: 4,
   },
-
-  groupGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
-  },
+  groupGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   groupChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -655,7 +574,6 @@ const modal = StyleSheet.create({
   },
   groupChipEmoji: { fontSize: 16 },
   groupChipText: { color: '#6b7280', fontSize: 13, fontWeight: '600' },
-
   exerciseRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -668,17 +586,9 @@ const modal = StyleSheet.create({
     borderColor: '#1f2a3c',
     marginBottom: 8,
   },
-  exerciseRowActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#0d1a35',
-  },
+  exerciseRowActive: { borderColor: '#2563eb', backgroundColor: '#0d1a35' },
   exerciseRowText: { color: '#94a3b8', fontSize: 14, fontWeight: '500' },
-
-  detailsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
+  detailsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   detailBox: {
     flex: 1,
     backgroundColor: '#111827',
@@ -689,14 +599,7 @@ const modal = StyleSheet.create({
     alignItems: 'center',
   },
   detailLabel: { color: '#6b7280', fontSize: 11, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' },
-  detailInput: {
-    color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    width: '100%',
-  },
-
+  detailInput: { color: 'white', fontSize: 22, fontWeight: 'bold', textAlign: 'center', width: '100%' },
   addBtn: {
     backgroundColor: '#2563eb',
     borderRadius: 14,

@@ -36,7 +36,7 @@ const EXERCISES: Exercise[] = [
     sets: '3-4 sets',
     reps: '10-12 reps',
     muscles: ['Anterior Deltoids', 'Lateral Deltoids', 'Triceps'],
-    image: require('../../assets/images/exercises/shoulders.png'), // swap for dumbbell_shoulder_press if you have it
+    image: require('../../assets/images/exercises/shoulders.png'),
     instructions: [
       'Sit on a bench with back support, holding dumbbells at shoulder height',
       'Keep your core tight and back flat against the pad',
@@ -137,7 +137,7 @@ const DIFFICULTY_COLORS: Record<string, { bg: string; text: string; border: stri
 
 const FILTERS: Difficulty[] = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
-// ── Detail Modal ──────────────────────────────────────────────────────────────
+
 function ExerciseModal({
   exercise,
   onClose,
@@ -235,7 +235,7 @@ function ExerciseModal({
   );
 }
 
-// ── Exercise Card ─────────────────────────────────────────────────────────────
+
 function ExerciseCard({
   exercise,
   onPress,
@@ -287,7 +287,7 @@ function ExerciseCard({
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
+
 export default function ShoulderExercises() {
   const router = useRouter();
   const [filter, setFilter] = useState<Difficulty>('All');
@@ -308,7 +308,6 @@ export default function ShoulderExercises() {
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backArrow}>←</Text>
@@ -318,7 +317,6 @@ export default function ShoulderExercises() {
           <Text style={styles.subtitle}>{filtered.length} exercises available</Text>
         </View>
 
-        {/* Filter tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -348,7 +346,6 @@ export default function ShoulderExercises() {
           })}
         </ScrollView>
 
-        {/* Exercise Cards */}
         <View style={styles.cardList}>
           {filtered.map(ex => (
             <ExerciseCard key={ex.id} exercise={ex} onPress={() => openExercise(ex)} />

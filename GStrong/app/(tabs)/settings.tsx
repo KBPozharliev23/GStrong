@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { supabase } from '../../lib/supabase';
 
 const LANGUAGES = ['English', 'Bulgarian'];
 
@@ -22,13 +25,50 @@ export default function Settings() {
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [displayName, setDisplayName] = useState('User');
+  const [userEmail, setUserEmail] = useState('');
   const router = useRouter();
+
+useFocusEffect(
+  useCallback(() => {
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (user.email) {
+        setUserEmail(user.email);
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.full_name) {
+        setDisplayName(profile.full_name);
+      } else if (user.user_metadata?.full_name) {
+        setDisplayName(user.user_metadata.full_name);
+      } else if (user.email) {
+        setDisplayName(user.email.split('@')[0]);
+      }
+    };
+
+    loadUser();
+  }, [])
+);
 
   const handleNavPress = (label: string) => {
     if (label === 'Edit Profile') router.replace('/(tabs)/editProfile');
     if (label === 'Email Preferences') router.replace('/(tabs)/emailPreferences');
     if (label === 'Change Password') router.replace('/(tabs)/changePassword');
     if (label === 'Language') setShowLanguagePicker(true);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowLogoutModal(false);
+    router.replace('/(auth)');
   };
 
   const renderSectionHeader = (title: string) => (
@@ -74,8 +114,9 @@ export default function Settings() {
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
 
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/profile')}>
-            <Text style={styles.backIcon}>‹</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+            <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
         </View>
@@ -89,8 +130,8 @@ export default function Settings() {
               />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>George Strong</Text>
-              <Text style={styles.profileEmail}>george.strong@gmail.com</Text>
+              <Text style={styles.profileName}>{displayName}</Text>
+              <Text style={styles.profileEmail}>{userEmail}</Text>
             </View>
           </View>
         </View>
@@ -179,7 +220,6 @@ export default function Settings() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Log Out Confirmation Modal */}
       <Modal transparent visible={showLogoutModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmCard}>
@@ -197,10 +237,7 @@ export default function Settings() {
               <TouchableOpacity
                 style={styles.confirmDangerBtn}
                 activeOpacity={0.7}
-                onPress={() => {
-                  setShowLogoutModal(false);
-                  router.replace('/(auth)');
-                }}
+                onPress={handleLogout}
               >
                 <Text style={styles.confirmDangerBtnText}>Log Out</Text>
               </TouchableOpacity>
@@ -209,7 +246,6 @@ export default function Settings() {
         </View>
       </Modal>
 
-      {/* Delete Account Confirmation Modal */}
       <Modal transparent visible={showDeleteModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmCard}>
@@ -246,25 +282,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#060a14' },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 54,
     paddingBottom: 16,
-    gap: 12,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#0c1120',
-    borderWidth: 1,
-    borderColor: '#1a2540',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
   },
-  backIcon: { color: '#3b82f6', fontSize: 26, lineHeight: 27, marginLeft: -2 },
-  title: { fontSize: 26, fontWeight: 'bold', color: 'white' },
+  backText: {
+    color: '#3B82F6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  title: { fontSize: 28, fontWeight: 'bold', color: 'white', marginBottom: 4 },
 
   section: { paddingHorizontal: 14, marginBottom: 6 },
 
@@ -352,7 +385,6 @@ const styles = StyleSheet.create({
 
   versionText: { color: '#374151', fontSize: 12, textAlign: 'center', marginTop: 16, marginBottom: 8 },
 
-  // Shared modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -360,7 +392,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Language picker
   pickerCard: {
     backgroundColor: '#0c1120',
     borderRadius: 20,
@@ -390,7 +421,6 @@ const styles = StyleSheet.create({
   checkmark: { color: '#2563eb', fontSize: 18, fontWeight: 'bold' },
   pickerSeparator: { height: 1, backgroundColor: '#1a2540', marginHorizontal: 16 },
 
-  // Confirm modals
   confirmCard: {
     backgroundColor: '#0c1120',
     borderRadius: 24,
